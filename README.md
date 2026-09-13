@@ -20,11 +20,14 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Repo](https://img.shields.io/badge/GitHub-ronaldkelechi11%2Fnoitca-black?logo=github)](https://github.com/ronaldkelechi11/noitca)
 
-[Live Demo](#) • [Features](#key-features) • [How It Works](#how-it-works) • [Quick Start](#quick-start) • [Action Catalog](#curated-action-catalog) • [CLI Reference](#cli-command-reference) • [Contributing](#contributing) • [Sponsors](#sponsors)
+[Live Demo](#) • [Features](#key-features) • [How It Works](#how-it-works) • [Quick Start](#quick-start) • [Action Catalog](#curated-action-catalog) • [CLI Reference](#cli-command-reference) • [Star Repo](#-give-a-star-to-the-repo) • [Contributing](#contributing) • [Sponsors](#sponsors)
 
 </div>
 
+> 🌟 **Support Open Source DevOps**: If you find **noitca** valuable, please give the repository a **[Star on GitHub](https://github.com/ronaldkelechi11/noitca)**! It takes 2 seconds and helps more developers discover visual pipeline automation.
+
 ---
+
 
 ## ⚡ What is noitca?
 
@@ -81,34 +84,25 @@ Writing GitHub Actions YAML by hand often means wrestling with indentation bugs,
 
 ---
 
-## ⚡ Quick Start & Installation
+## ⚡ Quick Start: Pull from GitHub & Start Server
 
-### Option 1: Zero-Install Instant Run (No install required)
-Run noitca directly in your terminal with `npx`:
+Run `noitca` directly by cloning or pulling from GitHub and starting the server all together with a single command:
+
+### 1. Update to Latest: Pull & Start (Recommended)
+If you already have the repository on your machine, pull the latest changes, install dependencies, and boot the server in one command:
 ```bash
-npx noitca start
+git pull origin main && npm install && npm start
 ```
 
-### Option 2: Global Installation (Recommended)
-Install the `noitca` CLI globally on your machine:
+### 2. First-Time Setup: Clone & Start
+To clone from scratch, install dependencies, and launch the server immediately:
 ```bash
-# Using npm
-npm install -g noitca
-
-# Using pnpm
-pnpm add -g noitca
-
-# Using yarn
-yarn global add noitca
+git clone https://github.com/ronaldkelechi11/noitca.git && cd noitca && npm install && npm start
 ```
 
-### Option 3: From Source (For Contributors & Hackers)
+### 3. Development Mode: Pull & Hot Reload
 ```bash
-git clone https://github.com/ronaldkelechi11/noitca.git
-cd noitca
-npm install
-npm run build
-npm start
+git pull origin main && npm install && npm run dev
 ```
 
 ---
@@ -207,7 +201,20 @@ noitca is engineered with a modular, zero-dependency client architecture:
 
 ---
 
+## ⭐ Give a Star to the Repo!
+
+If **noitca** helped streamline your CI/CD workflows, eliminated YAML frustration, or gave you a faster local developer feedback loop, please consider giving the project a star on GitHub! It takes just a second and makes a world of difference:
+
+[![Star on GitHub](https://img.shields.io/github/stars/ronaldkelechi11/noitca?style=for-the-badge&logo=github&color=eab308&label=Star%20noitca)](https://github.com/ronaldkelechi11/noitca)
+
+- **Star the repo**: [https://github.com/ronaldkelechi11/noitca](https://github.com/ronaldkelechi11/noitca)
+- **Follow the author**: [@ronaldkelechi11 on GitHub](https://github.com/ronaldkelechi11)
+- **Sponsor ongoing development**: [GitHub Sponsors](https://github.com/sponsors/ronaldkelechi11)
+
+---
+
 ## 👥 Community & Discussions
+
 
 Join the conversation, ask questions, share workflows, and connect with other developers:
 
