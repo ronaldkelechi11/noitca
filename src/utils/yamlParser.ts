@@ -22,9 +22,9 @@ export function parseYamlToWorkflow(yamlText: string, orientation: FlowOrientati
 
   const getPosition = (index: number) => {
     if (orientation === 'vertical') {
-      return { x: 100, y: 80 + index * 140 };
+      return { x: 100, y: 80 + index * 160 };
     } else {
-      return { x: 80 + index * 300, y: 150 };
+      return { x: 80 + index * 360, y: 150 };
     }
   };
 
@@ -245,30 +245,44 @@ export function parseYamlToWorkflow(yamlText: string, orientation: FlowOrientati
       } else if (uses.includes('actions/upload-artifact')) {
         nodes.push({
           id: `node-${Date.now()}-${nodes.length}`,
-          type: 'repo_upload_artifact',
+          type: 'artifact_upload',
           title: name || 'Upload Artifact',
-          subtitle: `Artifact: ${withConfig.name || 'dist'}`,
-          category: 'Repository',
+          subtitle: `Artifact: ${withConfig.name || 'build-assets'}`,
+          category: 'Artifacts',
           x: pos.x,
           y: pos.y,
-          iconType: 'upload_artifact',
-          badge: 'REPO',
-          badgeColor: 'bg-neutral-800 text-yellow-300 border-neutral-700',
-          config: { artifactName: withConfig.name || 'dist', artifactPath: withConfig.path || './dist', condition },
+          iconType: 'artifact_upload',
+          badge: 'ARTIFACT',
+          badgeColor: 'bg-yellow-400/10 text-yellow-400 border-yellow-400/30',
+          config: { artifactName: withConfig.name || 'build-assets', artifactPath: withConfig.path || './dist', retentionDays: withConfig['retention-days'] || 14, condition },
         });
       } else if (uses.includes('actions/download-artifact')) {
         nodes.push({
           id: `node-${Date.now()}-${nodes.length}`,
-          type: 'repo_download_artifact',
+          type: 'artifact_download',
           title: name || 'Download Artifact',
-          subtitle: `Artifact: ${withConfig.name || 'dist'}`,
-          category: 'Repository',
+          subtitle: `Artifact: ${withConfig.name || 'build-assets'}`,
+          category: 'Artifacts',
           x: pos.x,
           y: pos.y,
-          iconType: 'download_artifact',
-          badge: 'REPO',
-          badgeColor: 'bg-neutral-800 text-yellow-300 border-neutral-700',
-          config: { artifactName: withConfig.name || 'dist', condition },
+          iconType: 'artifact_download',
+          badge: 'ARTIFACT',
+          badgeColor: 'bg-yellow-400/10 text-yellow-400 border-yellow-400/30',
+          config: { artifactName: withConfig.name || 'build-assets', destinationPath: withConfig.path || './dist', condition },
+        });
+      } else if (uses.includes('action-gh-release')) {
+        nodes.push({
+          id: `node-${Date.now()}-${nodes.length}`,
+          type: 'git_release',
+          title: name || 'Create GitHub Release',
+          subtitle: `Release ${withConfig.tag_name || 'v1.0.0'}`,
+          category: 'Git',
+          x: pos.x,
+          y: pos.y,
+          iconType: 'git_release',
+          badge: 'RELEASE',
+          badgeColor: 'bg-yellow-400/20 text-yellow-300 border-yellow-400/40',
+          config: { tagName: withConfig.tag_name || 'v1.0.0', releaseName: withConfig.name || 'Release v1.0.0', condition },
         });
       } else if (uses.includes('docker/login-action')) {
         nodes.push({

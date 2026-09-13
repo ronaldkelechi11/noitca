@@ -51,7 +51,7 @@ export function compileWorkflowToYaml(name: string, nodes: WorkflowNode[], conne
     yaml += `  push:\n    branches:\n      - main\n  pull_request:\n    branches:\n      - main\n`;
   } else {
     triggerNodes.forEach(t => {
-      if (t.type === 'trigger_push') {
+      if (t.type === 'trigger_push' || t.type === 'trigger_commit') {
         yaml += `  push:\n    branches:\n      - ${t.config.branch || 'main'}\n`;
       } else if (t.type === 'trigger_pr') {
         yaml += `  pull_request:\n    branches:\n      - ${t.config.branch || 'main'}\n`;
@@ -78,6 +78,49 @@ export function compileWorkflowToYaml(name: string, nodes: WorkflowNode[], conne
       switch (step.type) {
         case 'repo_checkout':
           yaml += `        uses: actions/checkout@v4\n`;
+          if (step.config.ref || step.config.branch) {
+            yaml += `        with:\n          ref: ${step.config.ref || step.config.branch}\n`;
+          }
+          break;
+        case 'repo_clone':
+          yaml += `        run: |\n          git clone --branch ${step.config.branch || 'main'} ${step.config.repositoryUrl || 'https://github.com/org/repo.git'} ${step.config.targetPath || './external'}\n`;
+          break;
+        case 'repo_fetch':
+          yaml += `        run: |\n          git fetch --all ${step.config.fetchTags !== false ? '--tags' : ''} ${step.config.fetchDepth ? `--depth=${step.config.fetchDepth}` : ''}\n`;
+          break;
+        case 'repo_checkout_branch':
+          yaml += `        run: |\n          git checkout ${step.config.createIfMissing ? '-B' : ''} ${step.config.branchName || 'feature/ci-pipeline'}\n`;
+          break;
+        case 'repo_checkout_commit':
+          yaml += `        run: |\n          git checkout ${step.config.commitSha || 'HEAD~1'}\n`;
+          break;
+        case 'git_commit':
+          yaml += `        run: |\n          git config --global user.name "${step.config.authorName || 'github-actions[bot]'}"\n          git config --global user.email "${step.config.authorEmail || 'github-actions[bot]@users.noreply.github.com'}"\n          git add ${step.config.files || '.'}\n          git diff --quiet && git diff --staged --quiet || git commit -m "${step.config.message || 'ci: automated build updates [skip ci]'}"\n`;
+          break;
+        case 'git_push':
+          yaml += `        run: |\n          git push origin ${step.config.branch || 'main'} ${step.config.forcePush ? '--force' : ''} ${step.config.pushTags ? '--tags' : ''}\n`;
+          break;
+        case 'git_create_tag':
+          yaml += `        run: |\n          git tag -a ${step.config.tagName || 'v1.0.0'} -m "${step.config.annotationMessage || 'Release v1.0.0'}" ${step.config.commitSha || 'HEAD'}\n          git push origin ${step.config.tagName || 'v1.0.0'}\n`;
+          break;
+        case 'git_merge':
+          yaml += `        run: |\n          git checkout ${step.config.targetBranch || 'main'}\n          git merge --${step.config.strategy || 'no-ff'} ${step.config.sourceBranch || 'staging'}\n`;
+          break;
+        case 'git_release':
+          yaml += `        uses: softprops/action-gh-release@v2\n        with:\n          tag_name: ${step.config.tagName || 'v1.0.0'}\n          name: "${step.config.releaseName || 'Release v1.0.0'}"\n          draft: ${Boolean(step.config.isDraft)}\n          prerelease: ${Boolean(step.config.isPrerelease)}\n          generate_release_notes: ${step.config.generateNotes !== false}\n`;
+          break;
+        case 'repo_upload_artifact':
+        case 'artifact_upload':
+        case 'artifact_build_output':
+        case 'artifact_test_results':
+        case 'artifact_coverage':
+        case 'artifact_logs':
+          yaml += `        uses: actions/upload-artifact@v4\n        with:\n          name: ${step.config.artifactName || 'build-assets'}\n          path: ${step.config.artifactPath || './dist'}\n          retention-days: ${step.config.retentionDays || 14}\n`;
+          break;
+        case 'repo_download_artifact':
+        case 'artifact_download':
+        case 'artifact_download_previous':
+          yaml += `        uses: actions/download-artifact@v4\n        with:\n          name: ${step.config.artifactName || 'build-assets'}\n          path: ${step.config.destinationPath || './dist'}\n`;
           break;
         case 'env_setup_node':
           yaml += `        uses: actions/setup-node@v4\n        with:\n          node-version: '${step.config.runtimeVersion || '22'}'\n`;
@@ -90,12 +133,6 @@ export function compileWorkflowToYaml(name: string, nodes: WorkflowNode[], conne
           break;
         case 'env_setup_docker':
           yaml += `        uses: docker/setup-buildx-action@v3\n`;
-          break;
-        case 'repo_upload_artifact':
-          yaml += `        uses: actions/upload-artifact@v4\n        with:\n          name: ${step.config.artifactName || 'dist'}\n          path: ${step.config.artifactPath || './dist'}\n`;
-          break;
-        case 'repo_download_artifact':
-          yaml += `        uses: actions/download-artifact@v4\n        with:\n          name: ${step.config.artifactName || 'dist'}\n`;
           break;
         case 'docker_login':
           yaml += `        uses: docker/login-action@v3\n        with:\n          registry: ${step.config.registry || 'docker.io'}\n          username: ${step.config.username || '${{ secrets.DOCKER_USERNAME }}'}\n          password: \${{ secrets.DOCKER_PASSWORD }}\n`;

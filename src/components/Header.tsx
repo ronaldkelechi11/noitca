@@ -15,14 +15,14 @@ import {
   HiArrowDown,
   HiArrowRight,
   HiBars3,
-  HiArrowUpTray
+  HiPlay,
+  HiArrowDownTray
 } from 'react-icons/hi2';
 import { FlowOrientation } from '../types/workflow';
 
 interface HeaderProps {
   workflowName: string;
   onWorkflowNameChange: (name: string) => void;
-  onImportYamlClick: () => void;
   onExportYaml: () => void;
   onResetTemplate: () => void;
   onClearCanvas: () => void;
@@ -43,12 +43,14 @@ interface HeaderProps {
   hasTrigger: boolean;
   isSidebarOpen: boolean;
   onToggleSidebar: () => void;
+  onToggleLandingPage?: () => void;
+  onRunWorkflow?: () => void;
+  onSaveNoitca?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   workflowName,
   onWorkflowNameChange,
-  onImportYamlClick,
   onExportYaml,
   onResetTemplate,
   onClearCanvas,
@@ -69,6 +71,9 @@ export const Header: React.FC<HeaderProps> = ({
   hasTrigger,
   isSidebarOpen,
   onToggleSidebar,
+  onToggleLandingPage,
+  onRunWorkflow,
+  onSaveNoitca,
 }) => {
   return (
     <div className="flex flex-col bg-black border-b border-neutral-800/80 z-30 shrink-0">
@@ -150,11 +155,17 @@ export const Header: React.FC<HeaderProps> = ({
             <HiBars3 className="w-5 h-5" />
           </button>
 
-          <img
-            src="/logo.png"
-            alt="noitca"
-            className="h-8 w-auto object-contain"
-          />
+          <button
+            onClick={onToggleLandingPage}
+            className="flex items-center space-x-1.5 hover:opacity-85 transition-opacity cursor-pointer"
+            title="Return to Landing Page"
+          >
+            <img
+              src="/logo.png"
+              alt="noitca"
+              className="h-8 w-auto object-contain"
+            />
+          </button>
           <input
             type="text"
             value={workflowName}
@@ -259,22 +270,39 @@ export const Header: React.FC<HeaderProps> = ({
             <span>Clear</span>
           </button>
 
-          {/* Import & Export YAML Buttons */}
-          <button
-            onClick={onImportYamlClick}
-            className="flex items-center space-x-1.5 text-xs font-semibold text-neutral-200 hover:text-white bg-neutral-900 hover:bg-neutral-800 px-3.5 py-2 rounded-lg border border-neutral-800 hover:border-yellow-500/40 transition-all cursor-pointer ml-2"
-          >
-            <HiArrowUpTray className="w-4 h-4 text-yellow-400" />
-            <span>Import YAML</span>
-          </button>
+          {/* Save as .noitca file button */}
+          {onSaveNoitca && (
+            <button
+              onClick={onSaveNoitca}
+              className="flex items-center space-x-1.5 text-xs text-neutral-300 hover:text-white bg-neutral-900 hover:bg-neutral-800 px-3 py-1.5 rounded-lg border border-neutral-800 hover:border-yellow-400/40 transition-colors cursor-pointer"
+              title="Save workflow directly to local disk as .noitca file"
+            >
+              <HiArrowDownTray className="w-3.5 h-3.5 text-yellow-400" />
+              <span>Save .noitca</span>
+            </button>
+          )}
 
+          {/* Export YAML Button */}
           <button
             onClick={onExportYaml}
-            className="flex items-center space-x-2 bg-yellow-400 hover:bg-yellow-300 text-black text-xs font-bold px-4 py-2 rounded-lg shadow-lg shadow-yellow-500/20 transition-all transform active:scale-95 cursor-pointer"
+            className="flex items-center space-x-1.5 bg-neutral-900 hover:bg-neutral-800 text-neutral-200 hover:text-white border border-neutral-800 hover:border-yellow-500/40 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+            title="Export compiled GitHub Actions YAML"
           >
-            <HiCodeBracket className="w-4 h-4" />
+            <HiCodeBracket className="w-3.5 h-3.5 text-yellow-400" />
             <span>Export YAML</span>
           </button>
+
+          {/* Run Workflow Button */}
+          {onRunWorkflow && (
+            <button
+              onClick={onRunWorkflow}
+              className="flex items-center space-x-2 bg-yellow-400 hover:bg-yellow-300 text-black text-xs font-extrabold px-3.5 py-1.5 rounded-lg shadow-lg shadow-yellow-500/20 transition-all transform active:scale-95 cursor-pointer ml-1 animate-pulse-glow"
+              title="Simulate workflow execution with live streaming logs (⌘R)"
+            >
+              <HiPlay className="w-4 h-4 fill-black" />
+              <span>Run Workflow</span>
+            </button>
+          )}
         </div>
       </header>
     </div>

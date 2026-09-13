@@ -1,0 +1,57 @@
+# ==============================================================================
+# noitca — robots.txt
+# Open Source Visual DevOps & GitHub Actions Workflow Studio
+# Website: https://github.com/ronaldkelechi11/noitca
+# ==============================================================================
+
+# Search Engine Crawlers
+User-agent: Googlebot
+User-agent: Googlebot-Image
+User-agent: Bingbot
+User-agent: Applebot
+User-agent: DuckDuckBot
+User-agent: YandexBot
+User-agent: Baiduspider
+Allow: /
+Allow: /logo.png
+Allow: /icon.png
+Allow: /og-image.png
+Allow: /assets/
+
+# Social Media Preview Crawlers & Link Unfurlers
+User-agent: Twitterbot
+User-agent: facebookexternalhit
+User-agent: Facebot
+User-agent: LinkedInBot
+User-agent: Slackbot
+User-agent: Slackbot-LinkExpanding
+User-agent: Discordbot
+User-agent: TelegramBot
+User-agent: WhatsApp
+User-agent: SkypeUriPreview
+User-agent: Pinterestbot
+User-agent: redditbot
+User-agent: Bitlybot
+User-agent: vkShare
+Allow: /
+Allow: /og-image.png
+Allow: /logo.png
+Allow: /icon.png
+Allow: /site.webmanifest
+
+# AI & LLM Search Agents
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: Claude-Web
+User-agent: PerplexityBot
+User-agent: Google-Extended
+User-agent: Amazonbot
+Allow: /
+
+# Global Crawler Directives
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://noitca.dev/sitemap.xml
+Sitemap: https://ronaldkelechi11.github.io/noitca/sitemap.xml

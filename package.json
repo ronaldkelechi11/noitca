@@ -1,16 +1,39 @@
 {
   "name": "noitca",
-  "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "Visual GitHub Actions workflow studio & local DevOps pipeline builder",
+  "author": "Ronald Kelechi",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ronaldkelechi11/noitca.git"
+  },
+  "homepage": "https://github.com/ronaldkelechi11/noitca#readme",
+  "bugs": {
+    "url": "https://github.com/ronaldkelechi11/noitca/issues"
+  },
+  "keywords": [
+    "github-actions",
+    "devops",
+    "ci-cd",
+    "workflow-editor",
+    "pipeline",
+    "noitca"
+  ],
   "type": "module",
   "bin": {
     "noitca": "./bin/noitca.js"
   },
+  "files": [
+    "bin",
+    "dist"
+  ],
   "scripts": {
     "start": "node ./bin/noitca.js start",
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

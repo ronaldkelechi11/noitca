@@ -1,21 +1,56 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { WorkflowNode, NodeConnection, FlowOrientation, WorkflowState } from './types/workflow';
 import { INITIAL_NODES, INITIAL_CONNECTIONS, NodeTemplate } from './utils/defaultWorkflow';
 import { compileWorkflowToYaml } from './utils/yamlCompiler';
 import { parseYamlToWorkflow } from './utils/yamlParser';
+import { saveAsNoitcaFile, loadFromNoitcaFile } from './utils/noitcaFileIO';
+import { MenuBar } from './components/MenuBar';
 import { Header } from './components/Header';
 import { ActionPalette } from './components/ActionPalette';
 import { GridlinesCanvas } from './components/GridlinesCanvas';
 import { NodeInspector } from './components/NodeInspector';
 import { YamlPreviewModal } from './components/YamlPreviewModal';
 import { YamlImportModal } from './components/YamlImportModal';
+import { WorkflowRunModal } from './components/WorkflowRunModal';
 import { TemplateExplorerModal, WorkflowTemplatePreset } from './components/TemplateExplorerModal';
+import { ShortcutsModal } from './components/ShortcutsModal';
+import { AboutModal } from './components/AboutModal';
+import { LandingPage } from './components/LandingPage';
 
 export default function App() {
+  const [currentView, setCurrentView] = useState<'editor' | 'landing'>(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#editor') {
+      return 'editor';
+    }
+    return 'landing';
+  });
   const [workflowName, setWorkflowName] = useState('Basic Deployment');
   const [orientation, setOrientation] = useState<FlowOrientation>('vertical');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
+  // Listen to hash changes for smooth browser navigation (back/forward)
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#editor') {
+        setCurrentView('editor');
+      } else {
+        setCurrentView('landing');
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const navigateToEditor = useCallback(() => {
+    window.location.hash = '#editor';
+    setCurrentView('editor');
+  }, []);
+
+  const navigateToLanding = useCallback(() => {
+    window.location.hash = '';
+    setCurrentView('landing');
+  }, []);
+
   // Workflow state & History Undo/Redo stack
   const [history, setHistory] = useState<WorkflowState[]>([
     { nodes: INITIAL_NODES, connections: INITIAL_CONNECTIONS }
@@ -32,8 +67,14 @@ export default function App() {
   const [copiedNode, setCopiedNode] = useState<WorkflowNode | null>(null);
   const [isYamlOpen, setIsYamlOpen] = useState(false);
   const [isImportYamlOpen, setIsImportYamlOpen] = useState(false);
-  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(true); // Open Template Explorer on refresh/load
+  const [isRunModalOpen, setIsRunModalOpen] = useState(false);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [centerSignal, setCenterSignal] = useState(0);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const selectedNode = nodes.find(n => n.id === selectedNodeId) || null;
   const hasTrigger = nodes.some(n => n.category === 'Triggers');
@@ -117,6 +158,10 @@ export default function App() {
     setIsSidebarOpen(prev => !prev);
   }, []);
 
+  const handleCenterCanvas = useCallback(() => {
+    setCenterSignal(prev => prev + 1);
+  }, []);
+
   // Template Selection Handler (from Windows File Explorer Modal)
   const handleSelectTemplatePreset = (preset: WorkflowTemplatePreset) => {
     setWorkflowName(preset.name);
@@ -132,6 +177,52 @@ export default function App() {
     pushState(parsed.nodes, parsed.connections);
     setSelectedNodeId(null);
     setPreviewTemplate(null);
+  };
+
+  // Save Project as native .noitca file
+  const handleSaveNoitcaFile = () => {
+    saveAsNoitcaFile(workflowName, nodes, connections, orientation);
+  };
+
+  // Open native .noitca file dialog
+  const handleOpenNoitcaClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
+  // Handle native .noitca file loaded from local machine
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const loaded = await loadFromNoitcaFile(file);
+      setWorkflowName(loaded.name);
+      setOrientation(loaded.orientation);
+      pushState(loaded.nodes, loaded.connections);
+      setSelectedNodeId(null);
+      setPreviewTemplate(null);
+    } catch (err: any) {
+      alert(`Could not open file: ${err?.message || 'Invalid format'}`);
+    }
+  };
+
+  // Compiled YAML string
+  const compiledYaml = compileWorkflowToYaml(workflowName, nodes, connections);
+
+  // Direct Download deploy.yml
+  const handleDirectDownloadYaml = () => {
+    const blob = new Blob([compiledYaml], { type: 'text/yaml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'deploy.yml';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   // Keyboard Shortcuts
@@ -161,12 +252,33 @@ export default function App() {
       } else if (cmdOrCtrl && (e.key === 'v' || e.key === 'V')) {
         e.preventDefault();
         handlePasteNode();
+      } else if (cmdOrCtrl && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        handleSaveNoitcaFile();
+      } else if (cmdOrCtrl && (e.key === 'r' || e.key === 'R')) {
+        e.preventDefault();
+        setIsRunModalOpen(true);
+      } else if (cmdOrCtrl && (e.key === 'e' || e.key === 'E')) {
+        e.preventDefault();
+        setIsYamlOpen(true);
+      } else if (cmdOrCtrl && (e.key === 'o' || e.key === 'O')) {
+        e.preventDefault();
+        handleOpenNoitcaClick();
+      } else if (cmdOrCtrl && (e.key === 'i' || e.key === 'I')) {
+        e.preventDefault();
+        setIsImportYamlOpen(true);
+      } else if (cmdOrCtrl && (e.key === 'n' || e.key === 'N')) {
+        e.preventDefault();
+        setIsTemplateModalOpen(true);
       } else if (e.key === 'f' || e.key === 'F') {
         e.preventDefault();
         handleToggleFullscreen();
       } else if (e.key === 'b' || e.key === 'B') {
         e.preventDefault();
         handleToggleSidebar();
+      } else if (e.key === '?') {
+        e.preventDefault();
+        setIsShortcutsOpen(true);
       }
     };
 
@@ -196,9 +308,9 @@ export default function App() {
     if (lastNode) {
       if (orientation === 'vertical') {
         newX = lastNode.x;
-        newY = lastNode.y + 140;
+        newY = lastNode.y + 160;
       } else {
-        newX = lastNode.x + 300;
+        newX = lastNode.x + 360;
         newY = lastNode.y;
       }
     }
@@ -273,21 +385,59 @@ export default function App() {
 
     const realignedNodes = nodes.map((node, i) => ({
       ...node,
-      x: nextOrient === 'horizontal' ? 80 + i * 300 : 100,
-      y: nextOrient === 'horizontal' ? 150 : 80 + i * 140,
+      x: nextOrient === 'horizontal' ? 80 + i * 360 : 100,
+      y: nextOrient === 'horizontal' ? 150 : 80 + i * 160,
     }));
     pushState(realignedNodes, connections);
   };
 
-  const compiledYaml = compileWorkflowToYaml(workflowName, nodes, connections);
+  // Render Landing Page View
+  if (currentView === 'landing') {
+    return <LandingPage onLaunchEditor={navigateToEditor} />;
+  }
 
+  // Render Visual Workflow Editor View
   return (
     <div className="h-screen w-screen flex flex-col bg-black text-neutral-100 overflow-hidden font-sans">
+      {/* Top Menu Bar */}
+      <MenuBar
+        onNewTemplate={() => setIsTemplateModalOpen(true)}
+        onClearCanvas={handleClearCanvas}
+        onImportYaml={() => setIsImportYamlOpen(true)}
+        onExportYaml={() => setIsYamlOpen(true)}
+        onSaveProject={handleSaveNoitcaFile}
+        onSaveNoitcaFile={handleSaveNoitcaFile}
+        onOpenNoitcaFile={handleOpenNoitcaClick}
+        onRunWorkflow={() => setIsRunModalOpen(true)}
+        onDirectDownloadYaml={handleDirectDownloadYaml}
+        canUndo={historyIndex > 0}
+        canRedo={historyIndex < history.length - 1}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canCopy={Boolean(selectedNodeId)}
+        canPaste={Boolean(copiedNode)}
+        onCopySelected={() => handleCopyNode()}
+        onPasteCopied={handlePasteNode}
+        onDuplicateSelected={selectedNodeId ? () => handleDuplicateNode(selectedNodeId) : undefined}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={handleToggleSidebar}
+        orientation={orientation}
+        onToggleOrientation={handleToggleOrientation}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={handleToggleFullscreen}
+        onCenterCanvas={handleCenterCanvas}
+        onToggleLandingPage={navigateToLanding}
+        onOpenShortcutsModal={() => setIsShortcutsOpen(true)}
+        onOpenAboutModal={() => setIsAboutOpen(true)}
+      />
+
+      {/* Header Bar */}
       <Header
         workflowName={workflowName}
         onWorkflowNameChange={setWorkflowName}
-        onImportYamlClick={() => setIsImportYamlOpen(true)}
         onExportYaml={() => setIsYamlOpen(true)}
+        onSaveNoitca={handleSaveNoitcaFile}
+        onRunWorkflow={() => setIsRunModalOpen(true)}
         onResetTemplate={() => setIsTemplateModalOpen(true)}
         onClearCanvas={handleClearCanvas}
         canUndo={historyIndex > 0}
@@ -307,22 +457,25 @@ export default function App() {
         hasTrigger={hasTrigger}
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={handleToggleSidebar}
+        onToggleLandingPage={navigateToLanding}
       />
 
+      {/* Main Canvas Workspace */}
       <div className="flex-1 flex overflow-hidden relative">
-        {isSidebarOpen && (
-          <ActionPalette 
-            onAddNode={handleAddNode}
-            onPreviewTemplate={handlePreviewTemplate}
-            onCloseSidebar={() => setIsSidebarOpen(false)}
-          />
-        )}
+        {/* ActionPalette always rendered so collapsed icon rail & flyouts remain accessible */}
+        <ActionPalette 
+          isOpen={isSidebarOpen}
+          onToggleOpen={handleToggleSidebar}
+          onAddNode={handleAddNode}
+          onPreviewTemplate={handlePreviewTemplate}
+        />
 
         <GridlinesCanvas
           nodes={nodes}
           connections={connections}
           selectedNodeId={selectedNodeId}
           orientation={orientation}
+          centerSignal={centerSignal}
           onSelectNode={(id) => {
             setSelectedNodeId(id);
             if (id) setPreviewTemplate(null);
@@ -351,6 +504,7 @@ export default function App() {
         )}
       </div>
 
+      {/* Dialogs and Modals */}
       <YamlPreviewModal
         yaml={compiledYaml}
         isOpen={isYamlOpen}
@@ -363,10 +517,37 @@ export default function App() {
         onImportYaml={handleImportYaml}
       />
 
+      <WorkflowRunModal
+        isOpen={isRunModalOpen}
+        onClose={() => setIsRunModalOpen(false)}
+        workflowName={workflowName}
+        nodes={nodes}
+        connections={connections}
+      />
+
       <TemplateExplorerModal
         isOpen={isTemplateModalOpen}
         onClose={() => setIsTemplateModalOpen(false)}
         onSelectTemplate={handleSelectTemplatePreset}
+      />
+
+      <ShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
+      />
+
+      <AboutModal
+        isOpen={isAboutOpen}
+        onClose={() => setIsAboutOpen(false)}
+      />
+
+      {/* Hidden file input for opening native .noitca files */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept=".noitca,.json"
+        onChange={handleFileInputChange}
+        className="hidden"
       />
     </div>
   );

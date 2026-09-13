@@ -202,6 +202,193 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({
           </div>
         )}
 
+        {/* Repository Settings */}
+        {currentConfig.repositoryUrl !== undefined && (
+          <div className="space-y-1.5">
+            <label className="font-semibold text-neutral-300">Repository Clone URL</label>
+            <input
+              type="text"
+              value={currentConfig.repositoryUrl}
+              disabled={isPreview}
+              onChange={(e) => handleChangeConfig('repositoryUrl', e.target.value)}
+              placeholder="https://github.com/org/repo.git"
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
+            />
+          </div>
+        )}
+
+        {currentConfig.targetPath !== undefined && (
+          <div className="space-y-1.5">
+            <label className="font-semibold text-neutral-300">Target Path</label>
+            <input
+              type="text"
+              value={currentConfig.targetPath}
+              disabled={isPreview}
+              onChange={(e) => handleChangeConfig('targetPath', e.target.value)}
+              placeholder="./external"
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
+            />
+          </div>
+        )}
+
+        {/* Git Branch & Commit Settings */}
+        {currentConfig.branchName !== undefined && (
+          <div className="space-y-1.5">
+            <label className="font-semibold text-neutral-300">Branch Name</label>
+            <input
+              type="text"
+              value={currentConfig.branchName}
+              disabled={isPreview}
+              onChange={(e) => handleChangeConfig('branchName', e.target.value)}
+              placeholder="feature/branch-name"
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
+            />
+          </div>
+        )}
+
+        {currentConfig.sourceBranch !== undefined && (
+          <div className="space-y-1.5">
+            <label className="font-semibold text-neutral-300">Source Branch</label>
+            <input
+              type="text"
+              value={currentConfig.sourceBranch}
+              disabled={isPreview}
+              onChange={(e) => handleChangeConfig('sourceBranch', e.target.value)}
+              placeholder="staging"
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
+            />
+          </div>
+        )}
+
+        {currentConfig.targetBranch !== undefined && (
+          <div className="space-y-1.5">
+            <label className="font-semibold text-neutral-300">Target Branch</label>
+            <input
+              type="text"
+              value={currentConfig.targetBranch}
+              disabled={isPreview}
+              onChange={(e) => handleChangeConfig('targetBranch', e.target.value)}
+              placeholder="main"
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
+            />
+          </div>
+        )}
+
+        {currentConfig.commitSha !== undefined && (
+          <div className="space-y-1.5">
+            <label className="font-semibold text-neutral-300">Commit SHA / Ref</label>
+            <input
+              type="text"
+              value={currentConfig.commitSha}
+              disabled={isPreview}
+              onChange={(e) => handleChangeConfig('commitSha', e.target.value)}
+              placeholder="HEAD or commit hash"
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
+            />
+          </div>
+        )}
+
+        {currentConfig.message !== undefined && (
+          <div className="space-y-1.5">
+            <label className="font-semibold text-neutral-300">Commit Message</label>
+            <textarea
+              rows={2}
+              value={currentConfig.message}
+              disabled={isPreview}
+              onChange={(e) => handleChangeConfig('message', e.target.value)}
+              placeholder="ci: automated commit"
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
+            />
+          </div>
+        )}
+
+        {currentConfig.tagName !== undefined && (
+          <div className="space-y-1.5">
+            <label className="font-semibold text-neutral-300">Git Tag Name</label>
+            <input
+              type="text"
+              value={currentConfig.tagName}
+              disabled={isPreview}
+              onChange={(e) => handleChangeConfig('tagName', e.target.value)}
+              placeholder="v1.0.0"
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
+            />
+          </div>
+        )}
+
+        {currentConfig.releaseName !== undefined && (
+          <div className="space-y-1.5">
+            <label className="font-semibold text-neutral-300">Release Title</label>
+            <input
+              type="text"
+              value={currentConfig.releaseName}
+              disabled={isPreview}
+              onChange={(e) => handleChangeConfig('releaseName', e.target.value)}
+              placeholder="Release v1.0.0"
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
+            />
+          </div>
+        )}
+
+        {/* Artifact Settings */}
+        {currentConfig.artifactName !== undefined && (
+          <div className="space-y-3 pt-2 border-t border-neutral-800/80">
+            <h4 className="font-semibold text-neutral-200">Artifact Configuration</h4>
+            <div className="space-y-1.5">
+              <label className="text-neutral-400">Artifact Name</label>
+              <input
+                type="text"
+                value={currentConfig.artifactName}
+                disabled={isPreview}
+                onChange={(e) => handleChangeConfig('artifactName', e.target.value)}
+                placeholder="build-assets"
+                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
+              />
+            </div>
+
+            {currentConfig.artifactPath !== undefined && (
+              <div className="space-y-1.5">
+                <label className="text-neutral-400">Files Path (Glob / Directory)</label>
+                <input
+                  type="text"
+                  value={currentConfig.artifactPath}
+                  disabled={isPreview}
+                  onChange={(e) => handleChangeConfig('artifactPath', e.target.value)}
+                  placeholder="./dist or reports/**/*.xml"
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
+                />
+              </div>
+            )}
+
+            {currentConfig.destinationPath !== undefined && (
+              <div className="space-y-1.5">
+                <label className="text-neutral-400">Download Destination Path</label>
+                <input
+                  type="text"
+                  value={currentConfig.destinationPath}
+                  disabled={isPreview}
+                  onChange={(e) => handleChangeConfig('destinationPath', e.target.value)}
+                  placeholder="./dist"
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
+                />
+              </div>
+            )}
+
+            {currentConfig.retentionDays !== undefined && (
+              <div className="space-y-1.5">
+                <label className="text-neutral-400">Retention Days</label>
+                <input
+                  type="number"
+                  value={currentConfig.retentionDays}
+                  disabled={isPreview}
+                  onChange={(e) => handleChangeConfig('retentionDays', Number(e.target.value))}
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
+                />
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Condition Expression */}
         <div className="space-y-1.5 pt-2 border-t border-neutral-800/80">
           <label className="font-semibold text-neutral-300">Execution Condition (`if:`)</label>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://noitca.dev/</loc>
+    <lastmod>2026-09-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://noitca.dev/og-image.png</image:loc>
+      <image:title>noitca — Visual GitHub Actions Workflow Studio</image:title>
+      <image:caption>Open Source Visual GitHub Actions Workflow Studio and Local CI/CD Pipeline Editor</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://noitca.dev/logo.png</image:loc>
+      <image:title>noitca Brand Logo</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://ronaldkelechi11.github.io/noitca/</loc>
+    <lastmod>2026-09-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+</urlset>

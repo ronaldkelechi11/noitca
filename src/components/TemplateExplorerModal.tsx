@@ -5,11 +5,10 @@ import {
   HiMagnifyingGlass, 
   HiChevronRight, 
   HiSparkles,
-  HiComputerDesktop,
   HiClock,
   HiCheck
 } from 'react-icons/hi2';
-import { FaDocker, FaNodeJs, FaPython, FaGitAlt, FaSlack } from 'react-icons/fa6';
+import { FaDocker, FaNodeJs, FaPython, FaSlack } from 'react-icons/fa6';
 import { WorkflowNode, NodeConnection } from '../types/workflow';
 import { INITIAL_NODES, INITIAL_CONNECTIONS } from '../utils/defaultWorkflow';
 
@@ -350,9 +349,6 @@ export const TemplateExplorerModal: React.FC<TemplateExplorerModalProps> = ({
           {/* File Explorer Ribbon Tabs */}
           <div className="flex items-center space-x-4 text-xs text-neutral-400 px-2 font-medium">
             <span className="text-yellow-400 font-bold border-b-2 border-yellow-400 pb-0.5">File</span>
-            <span className="hover:text-neutral-200 cursor-pointer">Home</span>
-            <span className="hover:text-neutral-200 cursor-pointer">Share</span>
-            <span className="hover:text-neutral-200 cursor-pointer">View</span>
           </div>
 
           {/* Address & Search Input */}

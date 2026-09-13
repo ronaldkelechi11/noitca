@@ -2,11 +2,8 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { WorkflowNode, NodeConnection, FlowOrientation } from '../types/workflow';
 import { 
   HiMiniPlay, 
-  HiCommandLine, 
   HiCog6Tooth, 
-  HiCheckCircle, 
   HiTrash, 
-  HiCube, 
   HiCloudArrowUp,
   HiCloudArrowDown,
   HiHeart,
@@ -17,7 +14,10 @@ import {
   HiDocumentText,
   HiArrowUpTray,
   HiLockClosed,
-  HiDocumentDuplicate
+  HiDocumentDuplicate,
+  HiTag,
+  HiArrowPath,
+  HiChartBar
 } from 'react-icons/hi2';
 import { 
   FaDocker, 
@@ -34,7 +34,9 @@ import {
   FaVial, 
   FaTerminal, 
   FaFolderOpen,
-  FaLayerGroup
+  FaLayerGroup,
+  FaCodeCommit,
+  FaCodeMerge
 } from 'react-icons/fa6';
 
 interface GridlinesCanvasProps {
@@ -42,6 +44,7 @@ interface GridlinesCanvasProps {
   connections: NodeConnection[];
   selectedNodeId: string | null;
   orientation: FlowOrientation;
+  centerSignal?: number;
   onSelectNode: (nodeId: string | null) => void;
   onUpdateNodePosition: (nodeId: string, x: number, y: number) => void;
   onConnectNodes: (fromId: string, toId: string) => void;
@@ -52,11 +55,35 @@ interface GridlinesCanvasProps {
   onPasteNode: () => void;
 }
 
+const NODE_WIDTH = 300;
+const NODE_HEIGHT = 110;
+
+const getNodeDetailSnippet = (node: WorkflowNode): string | null => {
+  const c = node.config || {};
+  if (c.command) return `$ ${c.command}`;
+  if (c.artifactName) return `artifact: ${c.artifactName}`;
+  if (c.tagName) return `tag: ${c.tagName}`;
+  if (c.releaseName) return `release: ${c.releaseName}`;
+  if (c.message) return `commit: "${c.message.slice(0, 24)}${c.message.length > 24 ? '...' : ''}"`;
+  if (c.branchName) return `branch: ${c.branchName}`;
+  if (c.branch) return `branch: ${c.branch}`;
+  if (c.repositoryUrl) return `repo: ${c.repositoryUrl.split('/').pop() || c.repositoryUrl}`;
+  if (c.runtimeVersion) return `runtime: v${c.runtimeVersion}`;
+  if (c.imageName) return `image: ${c.imageName}:${c.imageTag || 'latest'}`;
+  if (c.channel) return `channel: ${c.channel}`;
+  if (c.cronExpression) return `cron: ${c.cronExpression}`;
+  if (c.testRunner) return `test: ${c.testRunner}`;
+  if (c.path) return `path: ${c.path}`;
+  if (c.repository && c.repository !== 'self') return `repo: ${c.repository}`;
+  return null;
+};
+
 export const GridlinesCanvas: React.FC<GridlinesCanvasProps> = ({
   nodes,
   connections,
   selectedNodeId,
   orientation,
+  centerSignal,
   onSelectNode,
   onUpdateNodePosition,
   onConnectNodes,
@@ -87,9 +114,9 @@ export const GridlinesCanvas: React.FC<GridlinesCanvasProps> = ({
 
     const rect = containerRef.current.getBoundingClientRect();
     const minX = Math.min(...nodes.map(n => n.x));
-    const maxX = Math.max(...nodes.map(n => n.x + 260));
+    const maxX = Math.max(...nodes.map(n => n.x + NODE_WIDTH));
     const minY = Math.min(...nodes.map(n => n.y));
-    const maxY = Math.max(...nodes.map(n => n.y + 90));
+    const maxY = Math.max(...nodes.map(n => n.y + NODE_HEIGHT));
 
     const contentWidth = maxX - minX;
     const contentHeight = maxY - minY;
@@ -128,6 +155,12 @@ export const GridlinesCanvas: React.FC<GridlinesCanvasProps> = ({
     };
   }, [centerGrid]);
 
+  useEffect(() => {
+    if (centerSignal) {
+      centerGrid();
+    }
+  }, [centerSignal, centerGrid]);
+
   // Non-passive wheel listener for smooth Touchpad Pinch Zoom & 2D Touchpad Panning
   useEffect(() => {
     const container = containerRef.current;
@@ -156,6 +189,8 @@ export const GridlinesCanvas: React.FC<GridlinesCanvasProps> = ({
   // Distinct Icon Mapping for Every Action Type
   const getNodeIcon = (iconType: string) => {
     switch (iconType) {
+      case 'commit':
+        return <FaCodeCommit className="w-5 h-5 text-yellow-400" />;
       case 'push':
         return <FaGitAlt className="w-5 h-5 text-yellow-400" />;
       case 'pr':
@@ -166,10 +201,38 @@ export const GridlinesCanvas: React.FC<GridlinesCanvasProps> = ({
         return <HiClock className="w-5 h-5 text-amber-300" />;
       case 'checkout':
         return <FaFolderOpen className="w-5 h-5 text-yellow-400" />;
+      case 'clone':
+        return <FaFolderOpen className="w-5 h-5 text-amber-300" />;
+      case 'fetch':
+        return <HiArrowPath className="w-5 h-5 text-yellow-400" />;
+      case 'checkout_branch':
+        return <FaCodeBranch className="w-5 h-5 text-amber-300" />;
+      case 'git_commit':
+        return <FaCodeCommit className="w-5 h-5 text-amber-300" />;
+      case 'git_push':
+        return <HiArrowUpTray className="w-5 h-5 text-yellow-400" />;
+      case 'git_tag':
+        return <HiTag className="w-5 h-5 text-yellow-400" />;
+      case 'git_merge':
+        return <FaCodeMerge className="w-5 h-5 text-amber-300" />;
+      case 'git_release':
+        return <HiSparkles className="w-5 h-5 text-yellow-400" />;
       case 'upload_artifact':
-        return <HiCloudArrowUp className="w-5 h-5 text-amber-400" />;
+      case 'artifact_upload':
+        return <HiCloudArrowUp className="w-5 h-5 text-yellow-400" />;
       case 'download_artifact':
-        return <HiCloudArrowDown className="w-5 h-5 text-yellow-300" />;
+      case 'artifact_download':
+        return <HiCloudArrowDown className="w-5 h-5 text-amber-300" />;
+      case 'artifact_build':
+        return <FaBox className="w-5 h-5 text-yellow-400" />;
+      case 'artifact_test':
+        return <FaVial className="w-5 h-5 text-amber-400" />;
+      case 'artifact_coverage':
+        return <HiChartBar className="w-5 h-5 text-yellow-300" />;
+      case 'artifact_logs':
+        return <HiDocumentText className="w-5 h-5 text-neutral-300" />;
+      case 'artifact_previous':
+        return <HiClock className="w-5 h-5 text-amber-300" />;
       case 'node':
         return <FaNodeJs className="w-5 h-5 text-amber-400" />;
       case 'python':
@@ -278,9 +341,6 @@ export const GridlinesCanvas: React.FC<GridlinesCanvasProps> = ({
     setConnectingFromId(null);
     setConnectingMousePos(null);
   };
-
-  const NODE_WIDTH = 260;
-  const NODE_HEIGHT = 90;
 
   const getPortCoords = (node: WorkflowNode, isOutput: boolean) => {
     if (orientation === 'vertical') {
@@ -417,6 +477,7 @@ export const GridlinesCanvas: React.FC<GridlinesCanvasProps> = ({
         {nodes.map((node) => {
           const isSelected = node.id === selectedNodeId;
           const isTriggerNode = node.category === 'Triggers';
+          const detailSnippet = getNodeDetailSnippet(node);
 
           return (
             <div
@@ -426,81 +487,110 @@ export const GridlinesCanvas: React.FC<GridlinesCanvasProps> = ({
                 left: `${node.x}px`,
                 top: `${node.y}px`,
                 width: `${NODE_WIDTH}px`,
+                minHeight: `${NODE_HEIGHT}px`,
               }}
-              className={`absolute pointer-events-auto rounded-2xl bg-neutral-950/95 border backdrop-blur-md shadow-2xl transition-shadow duration-150 p-4 ${
+              className={`absolute pointer-events-auto rounded-2xl bg-[#0a0a0a]/95 border backdrop-blur-md shadow-2xl transition-all duration-150 p-3 select-none flex flex-col justify-between ${
                 isSelected
-                  ? 'border-yellow-400 ring-2 ring-yellow-400/40 shadow-yellow-500/20'
-                  : 'border-neutral-800 hover:border-yellow-500/40'
+                  ? 'border-yellow-400 ring-2 ring-yellow-400/30 shadow-[0_0_25px_rgba(250,204,21,0.2)]'
+                  : 'border-neutral-800/90 hover:border-yellow-500/50 hover:shadow-[0_4px_24px_rgba(234,179,8,0.12)]'
               }`}
             >
               {/* Input Port (Only render if NOT a Trigger node) */}
               {!isTriggerNode && (
                 <div 
-                  className={`absolute w-6 h-6 rounded-full bg-black border border-neutral-700 flex items-center justify-center cursor-pointer hover:border-yellow-400 hover:scale-110 transition-transform ${
+                  className={`absolute w-6 h-6 rounded-full bg-black border border-neutral-700 flex items-center justify-center cursor-pointer hover:border-yellow-400 hover:scale-125 transition-all shadow-md z-10 ${
                     orientation === 'vertical'
                       ? '-top-3 left-1/2 -translate-x-1/2'
                       : '-left-3 top-1/2 -translate-y-1/2'
                   }`}
                   onMouseUp={(e) => endConnection(e, node.id)}
-                  title="Connect input port"
+                  title="Input port (connect from previous step)"
                 >
-                  <div className="w-2 h-2 rounded-full bg-neutral-400" />
+                  <div className="w-2 h-2 rounded-full bg-neutral-400 hover:bg-yellow-400 transition-colors" />
                 </div>
               )}
 
-              {/* Node Card Content */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3 min-w-0">
-                  <div className="p-2.5 bg-neutral-900 rounded-xl border border-neutral-800 shrink-0">
-                    {getNodeIcon(node.iconType)}
+              <div>
+                {/* Node Top Header: Category + Badge + Quick Actions */}
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-neutral-900/90">
+                  <div className="flex items-center space-x-1.5 min-w-0">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isTriggerNode ? 'bg-yellow-400 animate-pulse' : 'bg-neutral-500'}`} />
+                    <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-neutral-400 truncate">
+                      {node.category}
+                    </span>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center space-x-2">
-                      <h4 className="text-sm font-semibold text-white truncate">{node.title}</h4>
-                      {node.badge && (
-                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border font-medium ${node.badgeColor || 'bg-neutral-800 text-neutral-400'}`}>
-                          {node.badge}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-neutral-400 truncate mt-0.5">{node.subtitle}</p>
+
+                  <div className="flex items-center space-x-1.5 shrink-0 ml-2">
+                    {node.badge && (
+                      <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border font-medium ${node.badgeColor || 'bg-neutral-900 text-neutral-400 border-neutral-800'}`}>
+                        {node.badge}
+                      </span>
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDuplicateNode(node.id);
+                      }}
+                      className="p-1 text-neutral-500 hover:text-yellow-400 hover:bg-neutral-900 rounded transition-colors cursor-pointer"
+                      title="Duplicate step (⌘C / ⌘V)"
+                    >
+                      <HiDocumentDuplicate className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteNode(node.id);
+                      }}
+                      className="p-1 text-neutral-500 hover:text-rose-400 hover:bg-neutral-900 rounded transition-colors cursor-pointer"
+                      title="Delete step"
+                    >
+                      <HiTrash className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
 
-                {/* Node Quick Action Toolbar (Duplicate & Delete) */}
-                <div className="flex items-center space-x-1 pl-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDuplicateNode(node.id);
-                    }}
-                    className="p-1 text-neutral-500 hover:text-yellow-400 rounded transition-colors"
-                    title="Duplicate step (⌘C / ⌘V)"
-                  >
-                    <HiDocumentDuplicate className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteNode(node.id);
-                    }}
-                    className="p-1 text-neutral-500 hover:text-rose-400 rounded transition-colors"
-                    title="Delete step"
-                  >
-                    <HiTrash className="w-3.5 h-3.5" />
-                  </button>
+                {/* Node Middle Content: Icon + Title + Subtitle */}
+                <div className="flex items-start space-x-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-black border border-neutral-800/90 flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                    {getNodeIcon(node.iconType)}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <h4 
+                      className="text-[13px] font-bold text-white tracking-tight leading-snug break-words line-clamp-2"
+                      title={node.title}
+                    >
+                      {node.title}
+                    </h4>
+                    <p 
+                      className="text-[11px] text-neutral-400 leading-snug truncate mt-0.5 font-sans"
+                      title={node.subtitle}
+                    >
+                      {node.subtitle}
+                    </p>
+                  </div>
                 </div>
               </div>
 
+              {/* Node Bottom Parameter Pill (if applicable) */}
+              {detailSnippet && (
+                <div className="mt-2.5 pt-1.5 border-t border-neutral-900/90 flex items-center justify-between text-[10px] font-mono">
+                  <div className="flex items-center space-x-1.5 bg-black/80 border border-neutral-800/80 px-2 py-0.5 rounded text-neutral-300 truncate max-w-full">
+                    <span className="text-yellow-400 font-bold shrink-0">▸</span>
+                    <span className="truncate text-yellow-300/90">{detailSnippet}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Output Exit Port (Single Exit Point) */}
               <div 
-                className={`absolute w-6 h-6 rounded-full bg-black border border-yellow-500/60 flex items-center justify-center cursor-pointer hover:border-yellow-400 hover:scale-125 transition-transform ${
+                className={`absolute w-6 h-6 rounded-full bg-black border border-yellow-400/80 flex items-center justify-center cursor-pointer hover:border-yellow-300 hover:scale-125 transition-all shadow-md shadow-yellow-500/10 z-10 ${
                   orientation === 'vertical'
                     ? '-bottom-3 left-1/2 -translate-x-1/2'
                     : '-right-3 top-1/2 -translate-y-1/2'
                 }`}
                 onMouseDown={(e) => startConnection(e, node.id)}
-                title="Drag output exit port to connect next step"
+                title="Drag output port to connect next step"
               >
                 <HiPlus className="w-3.5 h-3.5 text-yellow-400" />
               </div>
