@@ -6,17 +6,26 @@ import {
   HiChevronRight, 
   HiSparkles,
   HiClock,
-  HiCheck
+  HiCheck,
+  HiCpuChip,
+  HiRocketLaunch
 } from 'react-icons/hi2';
 import { FaDocker, FaNodeJs, FaPython, FaSlack } from 'react-icons/fa6';
 import { WorkflowNode, NodeConnection } from '../types/workflow';
-import { INITIAL_NODES, INITIAL_CONNECTIONS } from '../utils/defaultWorkflow';
+import { WorkflowType } from '../types/loadTest';
+import {
+  INITIAL_NODES,
+  INITIAL_CONNECTIONS,
+  DEFAULT_LOAD_TEST_NODES,
+  DEFAULT_LOAD_TEST_CONNECTIONS
+} from '../utils/defaultWorkflow';
 
 export interface WorkflowTemplatePreset {
   id: string;
   filename: string;
   name: string;
   category: string;
+  workflowType: WorkflowType;
   size: string;
   dateModified: string;
   description: string;
@@ -26,35 +35,129 @@ export interface WorkflowTemplatePreset {
 }
 
 export const TEMPLATE_PRESETS: WorkflowTemplatePreset[] = [
+  // Load Testing Templates
+  {
+    id: 'load-test-full-journey',
+    filename: '01_Web_Service_Load_Test_Scenario.noitca',
+    name: 'Web Service User Journey Load Test',
+    category: 'Load Testing Workflows',
+    workflowType: 'load-test',
+    size: '5.1 KB',
+    dateModified: 'Just now',
+    description: 'Real-world load test scenario: Target Base URL -> 50 VUsers -> Sign In -> Fetch User Profile -> Search Jobs -> SLA Latency & Error Gate.',
+    icon: <HiCpuChip className="w-8 h-8 text-emerald-400" />,
+    nodes: DEFAULT_LOAD_TEST_NODES,
+    connections: DEFAULT_LOAD_TEST_CONNECTIONS,
+  },
+  {
+    id: 'load-test-spike',
+    filename: '02_High_Concurrency_Spike_Test.noitca',
+    name: 'High Concurrency API Spike Test',
+    category: 'Load Testing Workflows',
+    workflowType: 'load-test',
+    size: '4.5 KB',
+    dateModified: 'Today, 1:15 PM',
+    description: 'Simulate instant traffic spikes: Target Server -> 200 Concurrent VUsers (1s Ramp-up) -> Checkout Endpoint -> SLA Gate (p95 < 300ms).',
+    icon: <HiRocketLaunch className="w-8 h-8 text-amber-400" />,
+    nodes: [
+      {
+        id: 'sp-1',
+        type: 'target_server',
+        title: 'Production API Target',
+        subtitle: 'https://api.mywebserver.com',
+        category: 'Target Server',
+        x: 100,
+        y: 80,
+        iconType: 'server',
+        badge: 'TARGET',
+        badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+        config: { baseUrl: 'https://api.mywebserver.com' },
+      },
+      {
+        id: 'sp-2',
+        type: 'traffic_profile',
+        title: 'Traffic Spike Generator',
+        subtitle: '200 VUsers | 1s Ramp-up | 60s Duration',
+        category: 'Traffic Profile',
+        x: 100,
+        y: 240,
+        iconType: 'users',
+        badge: 'SPIKE ENGINE',
+        badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+        config: { virtualUsers: 200, rampUpSeconds: 1, durationSeconds: 60 },
+      },
+      {
+        id: 'sp-3',
+        type: 'http_request',
+        title: 'Checkout & Pay Action',
+        subtitle: 'POST /api/v1/checkout/pay',
+        category: 'User Journey',
+        x: 100,
+        y: 400,
+        iconType: 'globe',
+        badge: 'HTTP POST',
+        badgeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+        config: {
+          httpMethod: 'POST',
+          endpointPath: '/api/v1/checkout/pay',
+          body: '{"cart_id":"12345","payment_method":"stripe"}',
+          thinkTimeMs: 50,
+        },
+      },
+      {
+        id: 'sp-4',
+        type: 'sla_assertion',
+        title: 'SLA Quality Gate',
+        subtitle: 'p95 < 300ms | Error < 1.0%',
+        category: 'SLA & Assertions',
+        x: 100,
+        y: 560,
+        iconType: 'shield',
+        badge: 'SLA GATE',
+        badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+        config: { maxP95LatencyMs: 300, maxErrorPercentage: 1.0 },
+      },
+    ],
+    connections: [
+      { id: 'sp-conn-1', fromNodeId: 'sp-1', toNodeId: 'sp-2' },
+      { id: 'sp-conn-2', fromNodeId: 'sp-2', toNodeId: 'sp-3' },
+      { id: 'sp-conn-3', fromNodeId: 'sp-3', toNodeId: 'sp-4' },
+    ],
+  },
+
+  // CI/CD GitHub Actions Templates
   {
     id: 'blank',
-    filename: '01_Blank_Canvas.noitca',
-    name: 'Blank Canvas',
+    filename: '03_Blank_Canvas.noitca',
+    name: 'Blank CI/CD Canvas',
     category: 'Blank Projects',
+    workflowType: 'github-actions',
     size: '0 KB',
     dateModified: 'Just now',
-    description: 'Start with a completely empty canvas and build your workflow from scratch.',
+    description: 'Start with a completely empty canvas and build your GitHub Actions pipeline from scratch.',
     icon: <HiDocumentText className="w-8 h-8 text-neutral-400" />,
     nodes: [],
     connections: [],
   },
   {
     id: 'basic-deploy',
-    filename: '02_Basic_Deployment_Pipeline.noitca',
-    name: 'Basic Deployment Pipeline',
+    filename: '04_Basic_Deployment_Pipeline.noitca',
+    name: 'Basic CI/CD Deployment Pipeline',
     category: 'CI/CD Pipelines',
+    workflowType: 'github-actions',
     size: '4.2 KB',
     dateModified: 'Today, 2:40 PM',
-    description: 'Standard deployment pipeline: Push -> Checkout -> Setup Node 22 -> npm ci -> npm test -> npm run build -> SSH Deploy -> HTTP Health Check.',
+    description: 'Standard GitHub Actions pipeline: Push -> Checkout -> Setup Node 22 -> npm ci -> npm test -> npm run build -> SSH Deploy -> HTTP Health Check.',
     icon: <FaNodeJs className="w-8 h-8 text-yellow-400" />,
     nodes: INITIAL_NODES,
     connections: INITIAL_CONNECTIONS,
   },
   {
     id: 'docker-ci',
-    filename: '03_Docker_Container_CICD.noitca',
+    filename: '05_Docker_Container_CICD.noitca',
     name: 'Docker Container CI/CD',
     category: 'Docker Workflows',
+    workflowType: 'github-actions',
     size: '3.8 KB',
     dateModified: 'Yesterday',
     description: 'Docker image pipeline: Push -> Checkout -> Setup Docker Buildx -> Docker Login -> Build Image -> Push Image to Registry.',
@@ -149,9 +252,10 @@ export const TEMPLATE_PRESETS: WorkflowTemplatePreset[] = [
   },
   {
     id: 'python-app',
-    filename: '04_Python_App_Workflow.noitca',
+    filename: '06_Python_App_Workflow.noitca',
     name: 'Python Application Workflow',
     category: 'Language Runtimes',
+    workflowType: 'github-actions',
     size: '3.2 KB',
     dateModified: '3 days ago',
     description: 'Python CI workflow: Pull Request -> Checkout -> Setup Python 3.12 -> pip install -r requirements.txt -> pytest -> Upload Artifact.',
@@ -232,9 +336,10 @@ export const TEMPLATE_PRESETS: WorkflowTemplatePreset[] = [
   },
   {
     id: 'slack-health',
-    filename: '05_Slack_Health_Alerts.noitca',
+    filename: '07_Slack_Health_Alerts.noitca',
     name: 'Scheduled Health Check & Slack Alerts',
     category: 'CI/CD Pipelines',
+    workflowType: 'github-actions',
     size: '2.9 KB',
     dateModified: '5 days ago',
     description: 'Cron workflow: Schedule Cron (hourly) -> HTTP Health Check -> Post Slack Alert on failure/success.',
@@ -298,13 +403,13 @@ export const TemplateExplorerModal: React.FC<TemplateExplorerModalProps> = ({
   onClose,
   onSelectTemplate,
 }) => {
-  const [selectedId, setSelectedId] = useState<string>('basic-deploy');
+  const [selectedId, setSelectedId] = useState<string>('load-test-full-journey');
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
 
   if (!isOpen) return null;
 
-  const categories = ['All', 'Blank Projects', 'CI/CD Pipelines', 'Docker Workflows', 'Language Runtimes'];
+  const categories = ['All', 'Load Testing Workflows', 'CI/CD Pipelines', 'Docker Workflows', 'Language Runtimes', 'Blank Projects'];
 
   const filteredPresets = TEMPLATE_PRESETS.filter(preset => {
     const matchesSearch = preset.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -314,7 +419,7 @@ export const TemplateExplorerModal: React.FC<TemplateExplorerModalProps> = ({
     return matchesSearch && matchesCategory;
   });
 
-  const currentSelectedPreset = TEMPLATE_PRESETS.find(p => p.id === selectedId) || TEMPLATE_PRESETS[1];
+  const currentSelectedPreset = TEMPLATE_PRESETS.find(p => p.id === selectedId) || TEMPLATE_PRESETS[0];
 
   const handleConfirm = () => {
     if (currentSelectedPreset) {
@@ -333,7 +438,7 @@ export const TemplateExplorerModal: React.FC<TemplateExplorerModalProps> = ({
           <div className="flex items-center space-x-2">
             <img src="/logo.png" alt="noitca" className="w-4 h-4 object-contain" />
             <span className="text-xs font-semibold text-neutral-300 font-mono">
-              File Explorer - Select Workflow Template (C:\noitca\templates)
+              File Explorer - Select Workflow Preset (C:\noitca\templates)
             </span>
           </div>
 
@@ -346,11 +451,6 @@ export const TemplateExplorerModal: React.FC<TemplateExplorerModalProps> = ({
 
         {/* Ribbon Header Bar & Address Input */}
         <div className="p-2 bg-neutral-950 border-b border-neutral-800/80 flex flex-col gap-2">
-          {/* File Explorer Ribbon Tabs */}
-          <div className="flex items-center space-x-4 text-xs text-neutral-400 px-2 font-medium">
-            <span className="text-yellow-400 font-bold border-b-2 border-yellow-400 pb-0.5">File</span>
-          </div>
-
           {/* Address & Search Input */}
           <div className="flex items-center space-x-2">
             {/* Address Bar */}
@@ -441,11 +541,20 @@ export const TemplateExplorerModal: React.FC<TemplateExplorerModalProps> = ({
                         <div className="p-2.5 bg-neutral-900 border border-neutral-800 rounded-xl">
                           {preset.icon}
                         </div>
-                        {isSelected && (
-                          <span className="p-1 rounded-full bg-yellow-400 text-black">
-                            <HiCheck className="w-3.5 h-3.5 stroke-[3]" />
+                        <div className="flex items-center space-x-1.5">
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded border font-mono ${
+                            preset.workflowType === 'load-test'
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                              : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'
+                          }`}>
+                            {preset.workflowType === 'load-test' ? 'LOAD TEST' : 'CI/CD YAML'}
                           </span>
-                        )}
+                          {isSelected && (
+                            <span className="p-1 rounded-full bg-yellow-400 text-black">
+                              <HiCheck className="w-3.5 h-3.5 stroke-[3]" />
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <h4 className="text-sm font-bold text-white group-hover:text-yellow-400 transition-colors">
@@ -472,7 +581,7 @@ export const TemplateExplorerModal: React.FC<TemplateExplorerModalProps> = ({
         {/* Windows Explorer Bottom Status / Action Bar */}
         <div className="p-3 bg-neutral-900 border-t border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
           <div className="flex items-center space-x-2 w-full sm:w-auto">
-            <span className="text-neutral-400 font-mono">File name:</span>
+            <span className="text-neutral-400 font-mono">Selected:</span>
             <input
               type="text"
               readOnly

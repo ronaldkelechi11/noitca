@@ -10,7 +10,13 @@ export type NodeCategory =
   | 'Deployment'
   | 'Logic'
   | 'Verification'
-  | 'Notifications';
+  | 'Notifications'
+  // Load Testing Categories
+  | 'Target Server'
+  | 'Traffic Profile'
+  | 'User Journey'
+  | 'SLA & Assertions'
+  | 'AI Agent Strategy';
 
 export type FlowOrientation = 'vertical' | 'horizontal';
 
@@ -57,6 +63,23 @@ export interface NodeConfig {
   condition?: string;
   envVars?: Record<string, string>;
   secrets?: Record<string, string>;
+
+  // Load Test Node Configs
+  baseUrl?: string;
+  virtualUsers?: number;
+  rampUpSeconds?: number;
+  durationSeconds?: number;
+  requestsPerSecond?: number;
+  httpMethod?: string;
+  endpointPath?: string;
+  headers?: any;
+  body?: string;
+  thinkTimeMs?: number;
+  maxP95LatencyMs?: number;
+  maxErrorPercentage?: number;
+  aiPrompt?: string;
+  aiModelProvider?: string;
+
   [key: string]: any;
 }
 

@@ -9,25 +9,27 @@ import {
   HiArrowUturnRight,
   HiDocumentDuplicate,
   HiClipboardDocument,
-  HiSquares2X2,
-  HiArrowsPointingOut,
-  HiArrowsPointingIn,
   HiQuestionMarkCircle,
   HiInformationCircle,
-  HiSparkles,
-  HiViewColumns,
-  HiGlobeAlt,
-  HiPlay,
-  HiCommandLine
+  HiCommandLine,
+  HiChartBar,
+  HiCpuChip,
+  HiSparkles
 } from 'react-icons/hi2';
 import { FaGithub } from 'react-icons/fa6';
 import { FlowOrientation } from '../types/workflow';
+import { WorkflowType } from '../types/loadTest';
 
 interface MenuBarProps {
+  workflowType: WorkflowType;
+  onWorkflowTypeChange: (type: WorkflowType) => void;
   onNewTemplate: () => void;
   onClearCanvas: () => void;
   onImportYaml: () => void;
   onExportYaml: () => void;
+  onExportScript?: () => void;
+  onOpenAnalytics?: () => void;
+  onOpenAiAssistant?: () => void;
   onSaveProject: () => void;
   onSaveNoitcaFile?: () => void;
   onOpenNoitcaFile?: () => void;
@@ -55,15 +57,18 @@ interface MenuBarProps {
 }
 
 export const MenuBar: React.FC<MenuBarProps> = ({
+  workflowType,
+  onWorkflowTypeChange,
   onNewTemplate,
   onClearCanvas,
   onImportYaml,
   onExportYaml,
+  onExportScript,
+  onOpenAnalytics,
+  onOpenAiAssistant,
   onSaveProject,
   onSaveNoitcaFile,
   onOpenNoitcaFile,
-  onRunWorkflow,
-  onDirectDownloadYaml,
   canUndo,
   canRedo,
   onUndo,
@@ -72,14 +77,6 @@ export const MenuBar: React.FC<MenuBarProps> = ({
   canPaste,
   onCopySelected,
   onPasteCopied,
-  onDuplicateSelected,
-  isSidebarOpen,
-  onToggleSidebar,
-  orientation,
-  onToggleOrientation,
-  isFullscreen,
-  onToggleFullscreen,
-  onCenterCanvas,
   onToggleLandingPage,
   onOpenShortcutsModal,
   onOpenAboutModal,
@@ -110,7 +107,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
   return (
     <div 
       ref={menuBarRef} 
-      className="h-8 bg-neutral-950 border-b border-neutral-900 px-3 flex items-center select-none text-[12px] font-medium text-neutral-300 relative z-40 shrink-0"
+      className="h-8 bg-neutral-950 border-b border-neutral-900 px-3 flex items-center select-none text-[12px] font-medium text-neutral-300 relative z-40 shrink-0 font-sans"
     >
       {/* Brand icon mini */}
       <button 
@@ -145,7 +142,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
               >
                 <div className="flex items-center space-x-2">
                   <HiDocumentPlus className="w-4 h-4 text-yellow-400" />
-                  <span>New from Template...</span>
+                  <span>New Workflow Preset...</span>
                 </div>
                 <span className="text-[10px] text-neutral-500 font-mono">⌘N</span>
               </button>
@@ -169,7 +166,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({
               >
                 <div className="flex items-center space-x-2">
                   <HiArrowUpTray className="w-4 h-4 text-amber-300" />
-                  <span>Import GitHub YAML...</span>
+                  <span>Import GitHub Actions YAML...</span>
                 </div>
                 <span className="text-[10px] text-neutral-500 font-mono">⌘I</span>
               </button>
@@ -182,10 +179,23 @@ export const MenuBar: React.FC<MenuBarProps> = ({
               >
                 <div className="flex items-center space-x-2">
                   <HiArrowDownTray className="w-4 h-4 text-yellow-400" />
-                  <span>Save as .noitca File</span>
+                  <span>Save Project (.noitca)</span>
                 </div>
                 <span className="text-[10px] text-neutral-500 font-mono">⌘S</span>
               </button>
+
+              {workflowType === 'load-test' && onExportScript && (
+                <button
+                  onClick={() => handleItemClick(onExportScript)}
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-yellow-400 font-bold hover:bg-neutral-900 rounded-lg transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center space-x-2">
+                    <HiCommandLine className="w-4 h-4 text-yellow-400" />
+                    <span>Export Bash Script (.sh)...</span>
+                  </div>
+                  <span className="text-[10px] text-neutral-500 font-mono">⌘E</span>
+                </button>
+              )}
 
               <button
                 onClick={() => handleItemClick(onExportYaml)}
@@ -195,37 +205,8 @@ export const MenuBar: React.FC<MenuBarProps> = ({
                   <HiCodeBracket className="w-4 h-4 text-yellow-400" />
                   <span>Export & Inspect YAML...</span>
                 </div>
-                <span className="text-[10px] text-neutral-500 font-mono">⌘E</span>
+                <span className="text-[10px] text-neutral-500 font-mono">YAML</span>
               </button>
-
-              <button
-                onClick={() => handleItemClick(onDirectDownloadYaml)}
-                className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-neutral-200 hover:text-yellow-400 hover:bg-neutral-900 rounded-lg transition-colors cursor-pointer"
-              >
-                <div className="flex items-center space-x-2">
-                  <HiSparkles className="w-4 h-4 text-amber-400" />
-                  <span>Download deploy.yml</span>
-                </div>
-                <span className="text-yellow-400/80 font-mono text-[9px] bg-yellow-400/10 px-1 py-0.5 rounded">
-                  .github/workflows
-                </span>
-              </button>
-
-              {onRunWorkflow && (
-                <>
-                  <div className="my-1 border-t border-neutral-900" />
-                  <button
-                    onClick={() => handleItemClick(onRunWorkflow)}
-                    className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-yellow-400 hover:text-yellow-300 hover:bg-yellow-400/10 rounded-lg transition-colors cursor-pointer font-semibold"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <HiPlay className="w-4 h-4 text-yellow-400" />
-                      <span>Run Workflow (Live Logs)...</span>
-                    </div>
-                    <span className="text-[10px] text-neutral-500 font-mono">⌘R</span>
-                  </button>
-                </>
-              )}
 
               <div className="my-1 border-t border-neutral-900" />
 
@@ -237,8 +218,62 @@ export const MenuBar: React.FC<MenuBarProps> = ({
                   <HiTrash className="w-4 h-4" />
                   <span>Clear Canvas</span>
                 </div>
-                <span className="text-[10px] text-neutral-600 font-mono">Del All</span>
+                <span className="text-[10px] text-neutral-600 font-mono">Del</span>
               </button>
+            </div>
+          )}
+        </div>
+
+        {/* TOOLS / LOAD TEST MENU */}
+        <div className="relative">
+          <button
+            onClick={() => handleMenuClick('tools')}
+            className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
+              activeMenu === 'tools'
+                ? 'bg-neutral-800 text-yellow-400 font-semibold'
+                : 'hover:bg-neutral-900 hover:text-white'
+            }`}
+          >
+            Tools
+          </button>
+
+          {activeMenu === 'tools' && (
+            <div className="absolute left-0 top-full mt-1 w-64 bg-black border border-neutral-800 rounded-xl shadow-2xl p-1.5 z-50 animate-fade-in font-sans">
+
+              <button
+                onClick={() => handleItemClick(() => onWorkflowTypeChange(workflowType === 'github-actions' ? 'load-test' : 'github-actions'))}
+                className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-neutral-200 hover:text-yellow-400 hover:bg-neutral-900 rounded-lg transition-colors cursor-pointer"
+              >
+                <div className="flex items-center space-x-2">
+                  <HiCpuChip className="w-4 h-4 text-emerald-400" />
+                  <span>Switch to {workflowType === 'load-test' ? 'GitHub Actions Mode' : 'Load Testing Mode'}</span>
+                </div>
+              </button>
+
+              {onOpenAiAssistant && (
+                <button
+                  onClick={() => handleItemClick(onOpenAiAssistant)}
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-rose-300 font-bold hover:bg-rose-950/20 rounded-lg transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center space-x-2">
+                    <HiSparkles className="w-4 h-4 text-rose-400" />
+                    <span>AI Scenario Agent...</span>
+                  </div>
+                </button>
+              )}
+
+              {onOpenAnalytics && (
+                <button
+                  onClick={() => handleItemClick(onOpenAnalytics)}
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-emerald-300 font-bold hover:bg-emerald-950/20 rounded-lg transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center space-x-2">
+                    <HiChartBar className="w-4 h-4 text-emerald-400" />
+                    <span>Analytics & Debug Preview...</span>
+                  </div>
+                </button>
+              )}
+
             </div>
           )}
         </div>
@@ -323,118 +358,6 @@ export const MenuBar: React.FC<MenuBarProps> = ({
                 </div>
                 <span className="text-[10px] text-neutral-500 font-mono">⌘V</span>
               </button>
-
-              {onDuplicateSelected && (
-                <button
-                  disabled={!canCopy}
-                  onClick={() => handleItemClick(onDuplicateSelected)}
-                  className={`w-full flex items-center justify-between px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                    canCopy 
-                      ? 'text-neutral-200 hover:text-yellow-400 hover:bg-neutral-900 cursor-pointer' 
-                      : 'text-neutral-600 cursor-not-allowed'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <HiSquares2X2 className="w-4 h-4" />
-                    <span>Duplicate</span>
-                  </div>
-                  <span className="text-[10px] text-neutral-500 font-mono">⌘D</span>
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* VIEW MENU */}
-        <div className="relative">
-          <button
-            onClick={() => handleMenuClick('view')}
-            className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
-              activeMenu === 'view' 
-                ? 'bg-neutral-800 text-yellow-400 font-semibold' 
-                : 'hover:bg-neutral-900 hover:text-white'
-            }`}
-          >
-            View
-          </button>
-
-          {activeMenu === 'view' && (
-            <div className="absolute left-0 top-full mt-1 w-60 bg-black border border-neutral-800 rounded-xl shadow-2xl p-1.5 z-50 animate-fade-in font-sans">
-              <button
-                onClick={() => handleItemClick(onToggleSidebar)}
-                className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-neutral-200 hover:text-yellow-400 hover:bg-neutral-900 rounded-lg transition-colors cursor-pointer"
-              >
-                <div className="flex items-center space-x-2">
-                  <HiViewColumns className="w-4 h-4 text-yellow-400" />
-                  <span>{isSidebarOpen ? 'Collapse Sidebar Rail' : 'Expand Sidebar'}</span>
-                </div>
-                <span className="text-[10px] text-neutral-500 font-mono">B</span>
-              </button>
-
-              <button
-                onClick={() => handleItemClick(onToggleOrientation)}
-                className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-neutral-200 hover:text-yellow-400 hover:bg-neutral-900 rounded-lg transition-colors cursor-pointer"
-              >
-                <div className="flex items-center space-x-2">
-                  <HiSquares2X2 className="w-4 h-4 text-amber-300" />
-                  <span>Flow: {orientation === 'vertical' ? 'Switch to Horizontal' : 'Switch to Vertical'}</span>
-                </div>
-                <span className="text-[10px] text-neutral-500 font-mono">Tab</span>
-              </button>
-
-              <button
-                onClick={() => handleItemClick(onCenterCanvas)}
-                className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-neutral-200 hover:text-yellow-400 hover:bg-neutral-900 rounded-lg transition-colors cursor-pointer"
-              >
-                <div className="flex items-center space-x-2">
-                  <HiSquares2X2 className="w-4 h-4 text-neutral-400" />
-                  <span>Center Grid View</span>
-                </div>
-                <span className="text-[10px] text-neutral-500 font-mono">C</span>
-              </button>
-
-              <button
-                onClick={() => handleItemClick(onToggleFullscreen)}
-                className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-neutral-200 hover:text-yellow-400 hover:bg-neutral-900 rounded-lg transition-colors cursor-pointer"
-              >
-                <div className="flex items-center space-x-2">
-                  {isFullscreen ? (
-                    <HiArrowsPointingIn className="w-4 h-4 text-yellow-400" />
-                  ) : (
-                    <HiArrowsPointingOut className="w-4 h-4 text-yellow-400" />
-                  )}
-                  <span>{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
-                </div>
-                <span className="text-[10px] text-neutral-500 font-mono">F</span>
-              </button>
-
-              {onRunWorkflow && (
-                <button
-                  onClick={() => handleItemClick(onRunWorkflow)}
-                  className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-neutral-200 hover:text-yellow-400 hover:bg-neutral-900 rounded-lg transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center space-x-2">
-                    <HiCommandLine className="w-4 h-4 text-yellow-400" />
-                    <span>Execution Logs Console</span>
-                  </div>
-                  <span className="text-[10px] text-neutral-500 font-mono">⌘R</span>
-                </button>
-              )}
-
-              <div className="my-1 border-t border-neutral-900" />
-
-              <button
-                onClick={() => handleItemClick(onToggleLandingPage)}
-                className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-neutral-200 hover:text-yellow-400 hover:bg-neutral-900 rounded-lg transition-colors cursor-pointer"
-              >
-                <div className="flex items-center space-x-2">
-                  <HiGlobeAlt className="w-4 h-4 text-amber-400" />
-                  <span>Product Landing Page</span>
-                </div>
-                <span className="text-[9px] bg-yellow-400/20 text-yellow-400 px-1 py-0.5 rounded font-mono">
-                  CLI & Docs
-                </span>
-              </button>
             </div>
           )}
         </div>
@@ -497,7 +420,6 @@ export const MenuBar: React.FC<MenuBarProps> = ({
       {/* Right status info */}
       <div className="ml-auto flex items-center space-x-3 text-[11px] text-neutral-500 font-mono">
         <span className="hidden sm:inline">Press <kbd className="px-1 py-0.5 bg-neutral-900 border border-neutral-800 rounded text-neutral-300">C</kbd> to center</span>
-        <span className="hidden md:inline">Press <kbd className="px-1 py-0.5 bg-neutral-900 border border-neutral-800 rounded text-neutral-300">B</kbd> for sidebar</span>
         <button
           onClick={onToggleLandingPage}
           className="text-yellow-400 hover:underline flex items-center space-x-1 cursor-pointer"
