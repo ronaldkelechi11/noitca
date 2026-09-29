@@ -1,9 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { WorkflowNode, NodeConnection, FlowOrientation, WorkflowState } from './types/workflow';
-import { INITIAL_NODES, INITIAL_CONNECTIONS, NodeTemplate } from './utils/defaultWorkflow';
+import { WorkflowType } from './types/loadTest';
+import {
+  INITIAL_NODES,
+  INITIAL_CONNECTIONS,
+  DEFAULT_LOAD_TEST_NODES,
+  DEFAULT_LOAD_TEST_CONNECTIONS,
+  NodeTemplate
+} from './utils/defaultWorkflow';
 import { compileWorkflowToYaml } from './utils/yamlCompiler';
+import { compileWorkflowToLoadTestScript } from './utils/loadTestScriptCompiler';
 import { parseYamlToWorkflow } from './utils/yamlParser';
 import { saveAsNoitcaFile, loadFromNoitcaFile } from './utils/noitcaFileIO';
+
 import { MenuBar } from './components/MenuBar';
 import { Header } from './components/Header';
 import { ActionPalette } from './components/ActionPalette';
@@ -17,6 +26,10 @@ import { ShortcutsModal } from './components/ShortcutsModal';
 import { AboutModal } from './components/AboutModal';
 import { LandingPage } from './components/LandingPage';
 
+import { LoadTestAnalyticsPanel } from './components/LoadTestAnalyticsPanel';
+import { ScriptExportModal } from './components/ScriptExportModal';
+import { AiAssistantModal } from './components/AiAssistantModal';
+
 export default function App() {
   const [currentView, setCurrentView] = useState<'editor' | 'landing'>(() => {
     if (typeof window !== 'undefined' && window.location.hash === '#editor') {
@@ -24,10 +37,12 @@ export default function App() {
     }
     return 'landing';
   });
-  const [workflowName, setWorkflowName] = useState('Basic Deployment');
+
+  const [workflowType, setWorkflowType] = useState<WorkflowType>('load-test');
+  const [workflowName, setWorkflowName] = useState('Web Service Load Test Scenario');
   const [orientation, setOrientation] = useState<FlowOrientation>('vertical');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  
+
   // Listen to hash changes for smooth browser navigation (back/forward)
   useEffect(() => {
     const handleHashChange = () => {
@@ -53,7 +68,7 @@ export default function App() {
 
   // Workflow state & History Undo/Redo stack
   const [history, setHistory] = useState<WorkflowState[]>([
-    { nodes: INITIAL_NODES, connections: INITIAL_CONNECTIONS }
+    { nodes: DEFAULT_LOAD_TEST_NODES, connections: DEFAULT_LOAD_TEST_CONNECTIONS }
   ]);
   const [historyIndex, setHistoryIndex] = useState(0);
 
@@ -65,12 +80,19 @@ export default function App() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<NodeTemplate | null>(null);
   const [copiedNode, setCopiedNode] = useState<WorkflowNode | null>(null);
+
   const [isYamlOpen, setIsYamlOpen] = useState(false);
   const [isImportYamlOpen, setIsImportYamlOpen] = useState(false);
   const [isRunModalOpen, setIsRunModalOpen] = useState(false);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+
+  // Load Test Modals
+  const [isScriptExportOpen, setIsScriptExportOpen] = useState(false);
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
+
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [centerSignal, setCenterSignal] = useState(0);
 
@@ -99,7 +121,7 @@ export default function App() {
     if (historyIndex < history.length - 1) {
       setHistoryIndex(prev => prev + 1);
     }
-  }, [historyIndex]);
+  }, [historyIndex, history.length]);
 
   // Copy & Paste handlers
   const handleCopyNode = useCallback((nodeId?: string) => {
@@ -162,10 +184,24 @@ export default function App() {
     setCenterSignal(prev => prev + 1);
   }, []);
 
-  // Template Selection Handler (from Windows File Explorer Modal)
+  // Template Selection Handler (from File Explorer Modal)
   const handleSelectTemplatePreset = (preset: WorkflowTemplatePreset) => {
     setWorkflowName(preset.name);
+    setWorkflowType(preset.workflowType || 'load-test');
     pushState(preset.nodes, preset.connections);
+    setSelectedNodeId(null);
+    setPreviewTemplate(null);
+  };
+
+  // AI Generated Workflow Handler
+  const handleApplyAiWorkflow = (result: {
+    workflowName: string;
+    nodes: WorkflowNode[];
+    connections: NodeConnection[];
+  }) => {
+    setWorkflowName(result.workflowName);
+    setWorkflowType('load-test');
+    pushState(result.nodes, result.connections);
     setSelectedNodeId(null);
     setPreviewTemplate(null);
   };
@@ -174,6 +210,7 @@ export default function App() {
   const handleImportYaml = (yamlText: string) => {
     const parsed = parseYamlToWorkflow(yamlText, orientation);
     if (parsed.workflowName) setWorkflowName(parsed.workflowName);
+    setWorkflowType('github-actions');
     pushState(parsed.nodes, parsed.connections);
     setSelectedNodeId(null);
     setPreviewTemplate(null);
@@ -209,8 +246,9 @@ export default function App() {
     }
   };
 
-  // Compiled YAML string
+  // Compiled Artifacts
   const compiledYaml = compileWorkflowToYaml(workflowName, nodes, connections);
+  const compiledLoadTestScript = compileWorkflowToLoadTestScript(workflowName, nodes);
 
   // Direct Download deploy.yml
   const handleDirectDownloadYaml = () => {
@@ -257,10 +295,18 @@ export default function App() {
         handleSaveNoitcaFile();
       } else if (cmdOrCtrl && (e.key === 'r' || e.key === 'R')) {
         e.preventDefault();
-        setIsRunModalOpen(true);
+        if (workflowType === 'load-test') {
+          setIsAnalyticsOpen(true);
+        } else {
+          setIsRunModalOpen(true);
+        }
       } else if (cmdOrCtrl && (e.key === 'e' || e.key === 'E')) {
         e.preventDefault();
-        setIsYamlOpen(true);
+        if (workflowType === 'load-test') {
+          setIsScriptExportOpen(true);
+        } else {
+          setIsYamlOpen(true);
+        }
       } else if (cmdOrCtrl && (e.key === 'o' || e.key === 'O')) {
         e.preventDefault();
         handleOpenNoitcaClick();
@@ -286,7 +332,7 @@ export default function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleUndo, handleRedo, handleCopyNode, handlePasteNode, handleToggleFullscreen, handleToggleSidebar]);
+  }, [handleUndo, handleRedo, handleCopyNode, handlePasteNode, handleToggleFullscreen, handleToggleSidebar, workflowType]);
 
   // Node Mutations
   const handleUpdateNodePosition = (nodeId: string, x: number, y: number) => {
@@ -401,10 +447,15 @@ export default function App() {
     <div className="h-screen w-screen flex flex-col bg-black text-neutral-100 overflow-hidden font-sans">
       {/* Top Menu Bar */}
       <MenuBar
+        workflowType={workflowType}
+        onWorkflowTypeChange={setWorkflowType}
         onNewTemplate={() => setIsTemplateModalOpen(true)}
         onClearCanvas={handleClearCanvas}
         onImportYaml={() => setIsImportYamlOpen(true)}
         onExportYaml={() => setIsYamlOpen(true)}
+        onExportScript={() => setIsScriptExportOpen(true)}
+        onOpenAnalytics={() => setIsAnalyticsOpen(true)}
+        onOpenAiAssistant={() => setIsAiAssistantOpen(true)}
         onSaveProject={handleSaveNoitcaFile}
         onSaveNoitcaFile={handleSaveNoitcaFile}
         onOpenNoitcaFile={handleOpenNoitcaClick}
@@ -435,10 +486,21 @@ export default function App() {
       <Header
         workflowName={workflowName}
         onWorkflowNameChange={setWorkflowName}
+        workflowType={workflowType}
+        onWorkflowTypeChange={setWorkflowType}
         onExportYaml={() => setIsYamlOpen(true)}
+        onExportScript={() => setIsScriptExportOpen(true)}
+        onOpenAnalytics={() => setIsAnalyticsOpen(true)}
+        onOpenAiAssistant={() => setIsAiAssistantOpen(true)}
         onSaveNoitca={handleSaveNoitcaFile}
         onRunWorkflow={() => setIsRunModalOpen(true)}
-        onResetTemplate={() => setIsTemplateModalOpen(true)}
+        onResetTemplate={() => {
+          if (workflowType === 'load-test') {
+            pushState(DEFAULT_LOAD_TEST_NODES, DEFAULT_LOAD_TEST_CONNECTIONS);
+          } else {
+            pushState(INITIAL_NODES, INITIAL_CONNECTIONS);
+          }
+        }}
         onClearCanvas={handleClearCanvas}
         canUndo={historyIndex > 0}
         canRedo={historyIndex < history.length - 1}
@@ -509,6 +571,31 @@ export default function App() {
         yaml={compiledYaml}
         isOpen={isYamlOpen}
         onClose={() => setIsYamlOpen(false)}
+      />
+
+      <ScriptExportModal
+        isOpen={isScriptExportOpen}
+        onClose={() => setIsScriptExportOpen(false)}
+        workflowName={workflowName}
+        scriptContent={compiledLoadTestScript}
+      />
+
+      <LoadTestAnalyticsPanel
+        isOpen={isAnalyticsOpen}
+        onClose={() => setIsAnalyticsOpen(false)}
+        workflowName={workflowName}
+        nodes={nodes}
+        connections={connections}
+        onOpenScriptExport={() => {
+          setIsAnalyticsOpen(false);
+          setIsScriptExportOpen(true);
+        }}
+      />
+
+      <AiAssistantModal
+        isOpen={isAiAssistantOpen}
+        onClose={() => setIsAiAssistantOpen(false)}
+        onApplyGeneratedWorkflow={handleApplyAiWorkflow}
       />
 
       <YamlImportModal

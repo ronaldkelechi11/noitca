@@ -1,8 +1,6 @@
 import React from 'react';
 import { 
   HiCodeBracket, 
-  HiTrash, 
-  HiArrowPath, 
   HiArrowUturnLeft, 
   HiArrowUturnRight, 
   HiDocumentDuplicate, 
@@ -11,19 +9,23 @@ import {
   HiArrowsPointingIn,
   HiCheckCircle,
   HiExclamationTriangle,
-  HiCpuChip,
-  HiArrowDown,
-  HiArrowRight,
   HiBars3,
-  HiPlay,
-  HiArrowDownTray
+  HiCommandLine,
+  HiSparkles,
+  HiChartBar
 } from 'react-icons/hi2';
 import { FlowOrientation } from '../types/workflow';
+import { WorkflowType } from '../types/loadTest';
 
 interface HeaderProps {
   workflowName: string;
   onWorkflowNameChange: (name: string) => void;
+  workflowType: WorkflowType;
+  onWorkflowTypeChange: (type: WorkflowType) => void;
   onExportYaml: () => void;
+  onExportScript?: () => void;
+  onOpenAnalytics?: () => void;
+  onOpenAiAssistant?: () => void;
   onResetTemplate: () => void;
   onClearCanvas: () => void;
   canUndo: boolean;
@@ -51,9 +53,13 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   workflowName,
   onWorkflowNameChange,
+  workflowType,
+  onWorkflowTypeChange,
   onExportYaml,
+  onExportScript,
+  onOpenAnalytics,
+  onOpenAiAssistant,
   onResetTemplate,
-  onClearCanvas,
   canUndo,
   canRedo,
   onUndo,
@@ -65,26 +71,41 @@ export const Header: React.FC<HeaderProps> = ({
   isFullscreen,
   onToggleFullscreen,
   orientation,
-  onToggleOrientation,
   nodeCount,
   connectionCount,
   hasTrigger,
   isSidebarOpen,
   onToggleSidebar,
   onToggleLandingPage,
-  onRunWorkflow,
-  onSaveNoitca,
 }) => {
   return (
-    <div className="flex flex-col bg-black border-b border-neutral-800/80 z-30 shrink-0">
+    <div className="flex flex-col bg-black border-b border-neutral-800/80 z-30 shrink-0 font-sans">
       {/* Top Status Bar */}
       <div className="h-7 bg-neutral-950 border-b border-neutral-900 px-4 sm:px-6 flex items-center justify-between text-[11px] font-mono text-neutral-400">
         <div className="flex items-center space-x-4">
+          {/* Workflow Mode Indicator */}
+          <div className="flex items-center space-x-1">
+            <span className="text-neutral-500 font-bold">MODE:</span>
+            <button
+              onClick={() => onWorkflowTypeChange(workflowType === 'github-actions' ? 'load-test' : 'github-actions')}
+              className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase font-mono border transition-all cursor-pointer ${
+                workflowType === 'load-test'
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                  : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/20'
+              }`}
+              title="Click to switch between GitHub Actions CI/CD and Load Testing Studio"
+            >
+              {workflowType === 'load-test' ? '🚀 LOAD TEST STUDIO' : '⚙️ GITHUB ACTIONS CI/CD'}
+            </button>
+          </div>
+
+          <div className="w-[1px] h-3 bg-neutral-800" />
+
           {/* Pipeline Validation Status */}
-          {hasTrigger ? (
+          {hasTrigger || workflowType === 'load-test' ? (
             <div className="flex items-center space-x-1.5 text-emerald-400">
               <HiCheckCircle className="w-3.5 h-3.5" />
-              <span className="font-semibold">Pipeline Valid</span>
+              <span className="font-semibold">{workflowType === 'load-test' ? 'Load Test Ready' : 'Pipeline Valid'}</span>
             </div>
           ) : (
             <div className="flex items-center space-x-1.5 text-amber-400">
@@ -99,14 +120,6 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center space-x-3 text-neutral-300">
             <span><strong className="text-yellow-400">{nodeCount}</strong> Nodes</span>
             <span><strong className="text-yellow-400">{connectionCount}</strong> Edges</span>
-          </div>
-
-          <div className="w-[1px] h-3 bg-neutral-800" />
-
-          {/* Runner */}
-          <div className="flex items-center space-x-1 text-neutral-400">
-            <HiCpuChip className="w-3.5 h-3.5 text-yellow-400" />
-            <span>Runner: ubuntu-latest</span>
           </div>
         </div>
 
@@ -176,6 +189,31 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Control Toolbar */}
         <div className="flex items-center space-x-2">
+
+          {/* AI Scenario Agent Button */}
+          {onOpenAiAssistant && (
+            <button
+              onClick={onOpenAiAssistant}
+              className="flex items-center space-x-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+              title="Generate Load Test Scenario with AI Agent"
+            >
+              <HiSparkles className="w-4 h-4 text-rose-400 animate-pulse" />
+              <span>AI Scenario Agent</span>
+            </button>
+          )}
+
+          {/* Load Test Analytics Debug Button */}
+          {workflowType === 'load-test' && onOpenAnalytics && (
+            <button
+              onClick={onOpenAnalytics}
+              className="flex items-center space-x-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+              title="Open Analytics & Debug Preview Panel"
+            >
+              <HiChartBar className="w-4 h-4 text-emerald-400" />
+              <span>Analytics Preview</span>
+            </button>
+          )}
+
           {/* Undo / Redo Group */}
           <div className="flex items-center space-x-1 bg-neutral-900 border border-neutral-800 rounded-lg p-1">
             <button
@@ -232,77 +270,36 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
 
-          {/* Flow Orientation Toggle */}
-          <button
-            onClick={onToggleOrientation}
-            className="flex items-center space-x-1.5 text-xs text-neutral-300 hover:text-yellow-400 bg-neutral-900 hover:bg-neutral-800 px-3 py-1.5 rounded-lg border border-neutral-800 transition-colors cursor-pointer"
-            title="Toggle Flow Direction (Vertical / Horizontal)"
-          >
-            {orientation === 'vertical' ? (
-              <>
-                <HiArrowDown className="w-4 h-4 text-yellow-400" />
-                <span>Vertical ↓</span>
-              </>
-            ) : (
-              <>
-                <HiArrowRight className="w-4 h-4 text-yellow-400" />
-                <span>Horizontal →</span>
-              </>
-            )}
-          </button>
-
-          {/* Reset & Clear */}
+          {/* Reset */}
           <button
             onClick={onResetTemplate}
             className="flex items-center space-x-1.5 text-xs text-neutral-300 hover:text-white bg-neutral-900 hover:bg-neutral-800 px-3 py-1.5 rounded-lg border border-neutral-800 hover:border-yellow-500/30 transition-colors cursor-pointer"
             title="Reset to default pipeline"
           >
-            <HiArrowPath className="w-4 h-4 text-yellow-400" />
             <span>Reset</span>
           </button>
 
-          <button
-            onClick={onClearCanvas}
-            className="flex items-center space-x-1.5 text-xs text-neutral-400 hover:text-rose-400 bg-neutral-900 hover:bg-neutral-800 px-3 py-1.5 rounded-lg border border-neutral-800 hover:border-rose-500/30 transition-colors cursor-pointer"
-            title="Clear canvas"
-          >
-            <HiTrash className="w-4 h-4" />
-            <span>Clear</span>
-          </button>
-
-          {/* Save as .noitca file button */}
-          {onSaveNoitca && (
+          {/* Export Script / YAML Button */}
+          {workflowType === 'load-test' && onExportScript ? (
             <button
-              onClick={onSaveNoitca}
-              className="flex items-center space-x-1.5 text-xs text-neutral-300 hover:text-white bg-neutral-900 hover:bg-neutral-800 px-3 py-1.5 rounded-lg border border-neutral-800 hover:border-yellow-400/40 transition-colors cursor-pointer"
-              title="Save workflow directly to local disk as .noitca file"
+              onClick={onExportScript}
+              className="flex items-center space-x-1.5 bg-yellow-400 hover:bg-yellow-300 text-black text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer shadow-lg shadow-yellow-500/20"
+              title="Export Standalone Bash Load Test Script (.sh)"
             >
-              <HiArrowDownTray className="w-3.5 h-3.5 text-yellow-400" />
-              <span>Save .noitca</span>
+              <HiCommandLine className="w-4 h-4" />
+              <span>Export Bash Script (.sh)</span>
+            </button>
+          ) : (
+            <button
+              onClick={onExportYaml}
+              className="flex items-center space-x-1.5 bg-neutral-900 hover:bg-neutral-800 text-neutral-200 hover:text-white border border-neutral-800 hover:border-yellow-500/40 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+              title="Export compiled GitHub Actions YAML"
+            >
+              <HiCodeBracket className="w-3.5 h-3.5 text-yellow-400" />
+              <span>Export YAML</span>
             </button>
           )}
 
-          {/* Export YAML Button */}
-          <button
-            onClick={onExportYaml}
-            className="flex items-center space-x-1.5 bg-neutral-900 hover:bg-neutral-800 text-neutral-200 hover:text-white border border-neutral-800 hover:border-yellow-500/40 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-            title="Export compiled GitHub Actions YAML"
-          >
-            <HiCodeBracket className="w-3.5 h-3.5 text-yellow-400" />
-            <span>Export YAML</span>
-          </button>
-
-          {/* Run Workflow Button */}
-          {onRunWorkflow && (
-            <button
-              onClick={onRunWorkflow}
-              className="flex items-center space-x-2 bg-yellow-400 hover:bg-yellow-300 text-black text-xs font-extrabold px-3.5 py-1.5 rounded-lg shadow-lg shadow-yellow-500/20 transition-all transform active:scale-95 cursor-pointer ml-1 animate-pulse-glow"
-              title="Simulate workflow execution with live streaming logs (⌘R)"
-            >
-              <HiPlay className="w-4 h-4 fill-black" />
-              <span>Run Workflow</span>
-            </button>
-          )}
         </div>
       </header>
     </div>

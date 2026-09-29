@@ -140,6 +140,117 @@ export const INITIAL_CONNECTIONS: NodeConnection[] = [
   { id: 'conn-7', fromNodeId: 'node-7', toNodeId: 'node-8' },
 ];
 
+export const DEFAULT_LOAD_TEST_NODES: WorkflowNode[] = [
+  {
+    id: 'lt-1',
+    type: 'target_server',
+    title: 'Target Web Server',
+    subtitle: 'https://api.example.com',
+    category: 'Target Server',
+    x: 100,
+    y: 80,
+    iconType: 'server',
+    badge: 'TARGET',
+    badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    config: {
+      baseUrl: 'https://api.example.com',
+    },
+  },
+  {
+    id: 'lt-2',
+    type: 'traffic_profile',
+    title: 'Traffic & Ramping',
+    subtitle: '50 VUsers | 30s Duration',
+    category: 'Traffic Profile',
+    x: 100,
+    y: 240,
+    iconType: 'users',
+    badge: 'PROFILE',
+    badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    config: {
+      virtualUsers: 50,
+      rampUpSeconds: 5,
+      durationSeconds: 30,
+    },
+  },
+  {
+    id: 'lt-3',
+    type: 'http_request',
+    title: 'User Login Endpoint',
+    subtitle: 'POST /api/v1/auth/login',
+    category: 'User Journey',
+    x: 100,
+    y: 400,
+    iconType: 'globe',
+    badge: 'HTTP POST',
+    badgeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+    config: {
+      httpMethod: 'POST',
+      endpointPath: '/api/v1/auth/login',
+      body: '{"username":"testuser","password":"secretpassword"}',
+      thinkTimeMs: 150,
+    },
+  },
+  {
+    id: 'lt-4',
+    type: 'http_request',
+    title: 'Fetch User Profile',
+    subtitle: 'GET /api/v1/user/profile',
+    category: 'User Journey',
+    x: 100,
+    y: 560,
+    iconType: 'globe',
+    badge: 'HTTP GET',
+    badgeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+    config: {
+      httpMethod: 'GET',
+      endpointPath: '/api/v1/user/profile',
+      thinkTimeMs: 100,
+    },
+  },
+  {
+    id: 'lt-5',
+    type: 'http_request',
+    title: 'Search Jobs Catalog',
+    subtitle: 'GET /api/v1/jobs?status=active',
+    category: 'User Journey',
+    x: 100,
+    y: 720,
+    iconType: 'globe',
+    badge: 'HTTP GET',
+    badgeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+    config: {
+      httpMethod: 'GET',
+      endpointPath: '/api/v1/jobs?status=active',
+      thinkTimeMs: 200,
+    },
+  },
+  {
+    id: 'lt-6',
+    type: 'sla_assertion',
+    title: 'SLA Quality Gate',
+    subtitle: 'p95 < 500ms | Error < 2%',
+    category: 'SLA & Assertions',
+    x: 100,
+    y: 880,
+    iconType: 'shield',
+    badge: 'SLA',
+    badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+    config: {
+      maxP95LatencyMs: 500,
+      maxErrorPercentage: 2.0,
+    },
+  },
+];
+
+export const DEFAULT_LOAD_TEST_CONNECTIONS: NodeConnection[] = [
+  { id: 'lt-conn-1', fromNodeId: 'lt-1', toNodeId: 'lt-2' },
+  { id: 'lt-conn-2', fromNodeId: 'lt-2', toNodeId: 'lt-3' },
+  { id: 'lt-conn-3', fromNodeId: 'lt-3', toNodeId: 'lt-4' },
+  { id: 'lt-conn-4', fromNodeId: 'lt-4', toNodeId: 'lt-5' },
+  { id: 'lt-conn-5', fromNodeId: 'lt-5', toNodeId: 'lt-6' },
+];
+
 export interface NodeTemplate {
   type: string;
   title: string;
@@ -152,6 +263,69 @@ export interface NodeTemplate {
 }
 
 export const NODE_CATALOG: Record<NodeCategory, NodeTemplate[]> = {
+  // Load Testing Categories
+  'Target Server': [
+    {
+      type: 'target_server',
+      title: 'Target Web Service',
+      subtitle: 'Base URL for load test',
+      category: 'Target Server',
+      iconType: 'server',
+      badge: 'TARGET',
+      badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+      defaultConfig: { baseUrl: 'https://api.example.com' },
+    },
+  ],
+  'Traffic Profile': [
+    {
+      type: 'traffic_profile',
+      title: 'Traffic & Ramping',
+      subtitle: 'Virtual Users, Ramp-Up, Duration',
+      category: 'Traffic Profile',
+      iconType: 'users',
+      badge: 'PROFILE',
+      badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+      defaultConfig: { virtualUsers: 50, rampUpSeconds: 5, durationSeconds: 30 },
+    },
+  ],
+  'User Journey': [
+    {
+      type: 'http_request',
+      title: 'HTTP Request Step',
+      subtitle: 'Simulate API request action',
+      category: 'User Journey',
+      iconType: 'globe',
+      badge: 'HTTP',
+      badgeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+      defaultConfig: { httpMethod: 'GET', endpointPath: '/api/v1/resource', thinkTimeMs: 100 },
+    },
+  ],
+  'SLA & Assertions': [
+    {
+      type: 'sla_assertion',
+      title: 'SLA Quality Gate',
+      subtitle: 'Threshold assertions (p95 latency & errors)',
+      category: 'SLA & Assertions',
+      iconType: 'shield',
+      badge: 'SLA',
+      badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+      defaultConfig: { maxP95LatencyMs: 500, maxErrorPercentage: 2.0 },
+    },
+  ],
+  'AI Agent Strategy': [
+    {
+      type: 'ai_agent_scenario',
+      title: 'AI Scenario Agent',
+      subtitle: 'Generates multi-step user journey',
+      category: 'AI Agent Strategy',
+      iconType: 'sparkles',
+      badge: 'AI AGENT',
+      badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+      defaultConfig: { aiPrompt: 'Simulate high concurrency user actions: sign in, fetch profile, search jobs' },
+    },
+  ],
+
+  // CI/CD Categories
   Triggers: [
     {
       type: 'trigger_commit',

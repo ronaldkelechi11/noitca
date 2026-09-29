@@ -1,7 +1,7 @@
 import React from 'react';
 import { WorkflowNode } from '../types/workflow';
 import { NodeTemplate } from '../utils/defaultWorkflow';
-import { HiXMark, HiTrash, HiCheck, HiCommandLine, HiPlus } from 'react-icons/hi2';
+import { HiXMark, HiTrash, HiCheck, HiCommandLine, HiPlus, HiGlobeAlt, HiUsers, HiShieldCheck } from 'react-icons/hi2';
 
 interface NodeInspectorProps {
   node: WorkflowNode | null;
@@ -48,7 +48,7 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({
   };
 
   return (
-    <div className="w-96 bg-black border-l border-neutral-800/80 flex flex-col h-full z-20 shadow-2xl shrink-0">
+    <div className="w-96 bg-black border-l border-neutral-800/80 flex flex-col h-full z-20 shadow-2xl shrink-0 font-sans">
       {/* Drawer Header */}
       <div className="p-4 border-b border-neutral-800/80 flex items-center justify-between bg-black">
         <div>
@@ -76,7 +76,7 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({
       <div className="flex-1 overflow-y-auto p-4 space-y-5 text-xs">
         {/* Step Label */}
         <div className="space-y-1.5">
-          <label className="font-semibold text-neutral-300">Step Label</label>
+          <label className="font-semibold text-neutral-300">Step Title</label>
           <input
             type="text"
             value={currentTitle}
@@ -86,7 +86,173 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({
           />
         </div>
 
-        {/* Dynamic Fields */}
+        {/* --- LOAD TEST SPECIFIC FIELDS --- */}
+
+        {/* Target Base URL */}
+        {currentConfig.baseUrl !== undefined && (
+          <div className="space-y-2 pt-2 border-t border-neutral-800/80">
+            <div className="flex items-center space-x-1.5 text-emerald-400 font-bold">
+              <HiGlobeAlt className="w-4 h-4" />
+              <span>Target Server Endpoint</span>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-neutral-300">Base Webservice URL</label>
+              <input
+                type="text"
+                value={currentConfig.baseUrl}
+                disabled={isPreview}
+                onChange={(e) => handleChangeConfig('baseUrl', e.target.value)}
+                placeholder="https://api.mywebserver.com"
+                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-emerald-300 font-mono text-xs focus:outline-none focus:border-emerald-400 disabled:opacity-70"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Traffic Profile Settings */}
+        {(currentConfig.virtualUsers !== undefined || currentConfig.durationSeconds !== undefined) && (
+          <div className="space-y-3 pt-2 border-t border-neutral-800/80">
+            <div className="flex items-center space-x-1.5 text-amber-400 font-bold">
+              <HiUsers className="w-4 h-4" />
+              <span>Traffic & Concurrency Settings</span>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-neutral-300">Virtual Users (Concurrency)</label>
+              <input
+                type="number"
+                value={currentConfig.virtualUsers || 50}
+                disabled={isPreview}
+                onChange={(e) => handleChangeConfig('virtualUsers', Number(e.target.value))}
+                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-amber-300 font-mono text-xs focus:outline-none focus:border-amber-400 disabled:opacity-70"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
+                <label className="text-neutral-400">Ramp-Up (sec)</label>
+                <input
+                  type="number"
+                  value={currentConfig.rampUpSeconds || 5}
+                  disabled={isPreview}
+                  onChange={(e) => handleChangeConfig('rampUpSeconds', Number(e.target.value))}
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 font-mono text-xs focus:outline-none focus:border-amber-400 disabled:opacity-70"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-neutral-400">Duration (sec)</label>
+                <input
+                  type="number"
+                  value={currentConfig.durationSeconds || 30}
+                  disabled={isPreview}
+                  onChange={(e) => handleChangeConfig('durationSeconds', Number(e.target.value))}
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 font-mono text-xs focus:outline-none focus:border-amber-400 disabled:opacity-70"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* User Journey HTTP Request Step */}
+        {(currentConfig.httpMethod !== undefined || currentConfig.endpointPath !== undefined) && (
+          <div className="space-y-3 pt-2 border-t border-neutral-800/80">
+            <div className="flex items-center space-x-1.5 text-blue-400 font-bold">
+              <HiGlobeAlt className="w-4 h-4" />
+              <span>User Journey HTTP Step</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1.5">
+                <label className="text-neutral-400">Method</label>
+                <select
+                  value={currentConfig.httpMethod || 'GET'}
+                  disabled={isPreview}
+                  onChange={(e) => handleChangeConfig('httpMethod', e.target.value)}
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2 py-2 text-blue-300 font-bold text-xs focus:outline-none focus:border-blue-400 disabled:opacity-70"
+                >
+                  <option value="GET">GET</option>
+                  <option value="POST">POST</option>
+                  <option value="PUT">PUT</option>
+                  <option value="DELETE">DELETE</option>
+                  <option value="PATCH">PATCH</option>
+                </select>
+              </div>
+
+              <div className="col-span-2 space-y-1.5">
+                <label className="text-neutral-400">Endpoint Path</label>
+                <input
+                  type="text"
+                  value={currentConfig.endpointPath || '/'}
+                  disabled={isPreview}
+                  onChange={(e) => handleChangeConfig('endpointPath', e.target.value)}
+                  placeholder="/api/v1/resource"
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-blue-300 font-mono text-xs focus:outline-none focus:border-blue-400 disabled:opacity-70"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-neutral-400">Think Time Delay (ms)</label>
+              <input
+                type="number"
+                value={currentConfig.thinkTimeMs || 100}
+                disabled={isPreview}
+                onChange={(e) => handleChangeConfig('thinkTimeMs', Number(e.target.value))}
+                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 font-mono text-xs focus:outline-none focus:border-blue-400 disabled:opacity-70"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-neutral-400">HTTP Body (JSON / Payload)</label>
+              <textarea
+                rows={3}
+                value={currentConfig.body || ''}
+                disabled={isPreview}
+                onChange={(e) => handleChangeConfig('body', e.target.value)}
+                placeholder='{"key": "value"}'
+                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-200 font-mono text-xs focus:outline-none focus:border-blue-400 disabled:opacity-70"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* SLA Gate Settings */}
+        {(currentConfig.maxP95LatencyMs !== undefined || currentConfig.maxErrorPercentage !== undefined) && (
+          <div className="space-y-3 pt-2 border-t border-neutral-800/80">
+            <div className="flex items-center space-x-1.5 text-purple-400 font-bold">
+              <HiShieldCheck className="w-4 h-4" />
+              <span>SLA Quality Gate Thresholds</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5">
+                <label className="text-neutral-400">Max p95 Latency (ms)</label>
+                <input
+                  type="number"
+                  value={currentConfig.maxP95LatencyMs || 500}
+                  disabled={isPreview}
+                  onChange={(e) => handleChangeConfig('maxP95LatencyMs', Number(e.target.value))}
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-purple-300 font-mono text-xs focus:outline-none focus:border-purple-400 disabled:opacity-70"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-neutral-400">Max Error Rate (%)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={currentConfig.maxErrorPercentage || 2.0}
+                  disabled={isPreview}
+                  onChange={(e) => handleChangeConfig('maxErrorPercentage', Number(e.target.value))}
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-purple-300 font-mono text-xs focus:outline-none focus:border-purple-400 disabled:opacity-70"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- CI/CD GENERIC FIELDS --- */}
+
         {currentConfig.branch !== undefined && (
           <div className="space-y-1.5">
             <label className="font-semibold text-neutral-300">Target Branch</label>
@@ -132,263 +298,6 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({
           </div>
         )}
 
-        {currentConfig.sshHost !== undefined && (
-          <div className="space-y-3 pt-2 border-t border-neutral-800/80">
-            <h4 className="font-semibold text-neutral-200">SSH Remote Settings</h4>
-            
-            <div className="space-y-1.5">
-              <label className="text-neutral-400">Host / Domain</label>
-              <input
-                type="text"
-                value={currentConfig.sshHost}
-                disabled={isPreview}
-                onChange={(e) => handleChangeConfig('sshHost', e.target.value)}
-                placeholder="production.example.com"
-                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1.5">
-                <label className="text-neutral-400">User</label>
-                <input
-                  type="text"
-                  value={currentConfig.sshUser || 'deploy'}
-                  disabled={isPreview}
-                  onChange={(e) => handleChangeConfig('sshUser', e.target.value)}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-neutral-400">Port</label>
-                <input
-                  type="number"
-                  value={currentConfig.sshPort || 22}
-                  disabled={isPreview}
-                  onChange={(e) => handleChangeConfig('sshPort', Number(e.target.value))}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {currentConfig.healthUrl !== undefined && (
-          <div className="space-y-3 pt-2 border-t border-neutral-800/80">
-            <h4 className="font-semibold text-neutral-200">Verification Endpoint</h4>
-            
-            <div className="space-y-1.5">
-              <label className="text-neutral-400">Health Check URL</label>
-              <input
-                type="text"
-                value={currentConfig.healthUrl}
-                disabled={isPreview}
-                onChange={(e) => handleChangeConfig('healthUrl', e.target.value)}
-                placeholder="https://api.example.com/health"
-                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-neutral-400">Expected HTTP Status</label>
-              <input
-                type="number"
-                value={currentConfig.expectedStatus || 200}
-                disabled={isPreview}
-                onChange={(e) => handleChangeConfig('expectedStatus', Number(e.target.value))}
-                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Repository Settings */}
-        {currentConfig.repositoryUrl !== undefined && (
-          <div className="space-y-1.5">
-            <label className="font-semibold text-neutral-300">Repository Clone URL</label>
-            <input
-              type="text"
-              value={currentConfig.repositoryUrl}
-              disabled={isPreview}
-              onChange={(e) => handleChangeConfig('repositoryUrl', e.target.value)}
-              placeholder="https://github.com/org/repo.git"
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-            />
-          </div>
-        )}
-
-        {currentConfig.targetPath !== undefined && (
-          <div className="space-y-1.5">
-            <label className="font-semibold text-neutral-300">Target Path</label>
-            <input
-              type="text"
-              value={currentConfig.targetPath}
-              disabled={isPreview}
-              onChange={(e) => handleChangeConfig('targetPath', e.target.value)}
-              placeholder="./external"
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-            />
-          </div>
-        )}
-
-        {/* Git Branch & Commit Settings */}
-        {currentConfig.branchName !== undefined && (
-          <div className="space-y-1.5">
-            <label className="font-semibold text-neutral-300">Branch Name</label>
-            <input
-              type="text"
-              value={currentConfig.branchName}
-              disabled={isPreview}
-              onChange={(e) => handleChangeConfig('branchName', e.target.value)}
-              placeholder="feature/branch-name"
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-            />
-          </div>
-        )}
-
-        {currentConfig.sourceBranch !== undefined && (
-          <div className="space-y-1.5">
-            <label className="font-semibold text-neutral-300">Source Branch</label>
-            <input
-              type="text"
-              value={currentConfig.sourceBranch}
-              disabled={isPreview}
-              onChange={(e) => handleChangeConfig('sourceBranch', e.target.value)}
-              placeholder="staging"
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-            />
-          </div>
-        )}
-
-        {currentConfig.targetBranch !== undefined && (
-          <div className="space-y-1.5">
-            <label className="font-semibold text-neutral-300">Target Branch</label>
-            <input
-              type="text"
-              value={currentConfig.targetBranch}
-              disabled={isPreview}
-              onChange={(e) => handleChangeConfig('targetBranch', e.target.value)}
-              placeholder="main"
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-            />
-          </div>
-        )}
-
-        {currentConfig.commitSha !== undefined && (
-          <div className="space-y-1.5">
-            <label className="font-semibold text-neutral-300">Commit SHA / Ref</label>
-            <input
-              type="text"
-              value={currentConfig.commitSha}
-              disabled={isPreview}
-              onChange={(e) => handleChangeConfig('commitSha', e.target.value)}
-              placeholder="HEAD or commit hash"
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-            />
-          </div>
-        )}
-
-        {currentConfig.message !== undefined && (
-          <div className="space-y-1.5">
-            <label className="font-semibold text-neutral-300">Commit Message</label>
-            <textarea
-              rows={2}
-              value={currentConfig.message}
-              disabled={isPreview}
-              onChange={(e) => handleChangeConfig('message', e.target.value)}
-              placeholder="ci: automated commit"
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-            />
-          </div>
-        )}
-
-        {currentConfig.tagName !== undefined && (
-          <div className="space-y-1.5">
-            <label className="font-semibold text-neutral-300">Git Tag Name</label>
-            <input
-              type="text"
-              value={currentConfig.tagName}
-              disabled={isPreview}
-              onChange={(e) => handleChangeConfig('tagName', e.target.value)}
-              placeholder="v1.0.0"
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-            />
-          </div>
-        )}
-
-        {currentConfig.releaseName !== undefined && (
-          <div className="space-y-1.5">
-            <label className="font-semibold text-neutral-300">Release Title</label>
-            <input
-              type="text"
-              value={currentConfig.releaseName}
-              disabled={isPreview}
-              onChange={(e) => handleChangeConfig('releaseName', e.target.value)}
-              placeholder="Release v1.0.0"
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-            />
-          </div>
-        )}
-
-        {/* Artifact Settings */}
-        {currentConfig.artifactName !== undefined && (
-          <div className="space-y-3 pt-2 border-t border-neutral-800/80">
-            <h4 className="font-semibold text-neutral-200">Artifact Configuration</h4>
-            <div className="space-y-1.5">
-              <label className="text-neutral-400">Artifact Name</label>
-              <input
-                type="text"
-                value={currentConfig.artifactName}
-                disabled={isPreview}
-                onChange={(e) => handleChangeConfig('artifactName', e.target.value)}
-                placeholder="build-assets"
-                className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-              />
-            </div>
-
-            {currentConfig.artifactPath !== undefined && (
-              <div className="space-y-1.5">
-                <label className="text-neutral-400">Files Path (Glob / Directory)</label>
-                <input
-                  type="text"
-                  value={currentConfig.artifactPath}
-                  disabled={isPreview}
-                  onChange={(e) => handleChangeConfig('artifactPath', e.target.value)}
-                  placeholder="./dist or reports/**/*.xml"
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-                />
-              </div>
-            )}
-
-            {currentConfig.destinationPath !== undefined && (
-              <div className="space-y-1.5">
-                <label className="text-neutral-400">Download Destination Path</label>
-                <input
-                  type="text"
-                  value={currentConfig.destinationPath}
-                  disabled={isPreview}
-                  onChange={(e) => handleChangeConfig('destinationPath', e.target.value)}
-                  placeholder="./dist"
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-                />
-              </div>
-            )}
-
-            {currentConfig.retentionDays !== undefined && (
-              <div className="space-y-1.5">
-                <label className="text-neutral-400">Retention Days</label>
-                <input
-                  type="number"
-                  value={currentConfig.retentionDays}
-                  disabled={isPreview}
-                  onChange={(e) => handleChangeConfig('retentionDays', Number(e.target.value))}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-2 text-neutral-100 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-70"
-                />
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Condition Expression */}
         <div className="space-y-1.5 pt-2 border-t border-neutral-800/80">
           <label className="font-semibold text-neutral-300">Execution Condition (`if:`)</label>
@@ -415,7 +324,7 @@ export const NodeInspector: React.FC<NodeInspectorProps> = ({
             className="w-full flex items-center justify-center space-x-2 bg-yellow-400 hover:bg-yellow-300 text-black px-4 py-2 rounded-lg transition-colors text-xs font-bold cursor-pointer"
           >
             <HiPlus className="w-4 h-4" />
-            <span>Add Action to Grid (Or Double-Click in Sidebar)</span>
+            <span>Add Action to Grid</span>
           </button>
         ) : (
           <>

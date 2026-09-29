@@ -15,7 +15,10 @@ import {
   HiHeart, 
   HiBell, 
   HiPlus,
-  HiArchiveBox
+  HiArchiveBox,
+  HiServer,
+  HiUsers,
+  HiShieldCheck
 } from 'react-icons/hi2';
 import { FaDocker, FaCodeBranch, FaGitAlt } from 'react-icons/fa6';
 
@@ -68,6 +71,16 @@ export const ActionPalette: React.FC<ActionPaletteProps> = ({
 
   const getCategoryIcon = (cat: NodeCategory) => {
     switch (cat) {
+      case 'Target Server':
+        return <HiServer className="w-4 h-4 text-emerald-400" />;
+      case 'Traffic Profile':
+        return <HiUsers className="w-4 h-4 text-amber-400" />;
+      case 'User Journey':
+        return <HiGlobeAlt className="w-4 h-4 text-blue-400" />;
+      case 'SLA & Assertions':
+        return <HiShieldCheck className="w-4 h-4 text-purple-400" />;
+      case 'AI Agent Strategy':
+        return <HiSparkles className="w-4 h-4 text-rose-400" />;
       case 'Triggers':
         return <HiBolt className="w-4 h-4 text-yellow-400" />;
       case 'Repository':
@@ -113,7 +126,7 @@ export const ActionPalette: React.FC<ActionPaletteProps> = ({
         <div className="w-8 h-[1px] bg-neutral-800 mb-3" />
 
         {/* Category Icons Rail with Hover Flyouts */}
-        <div className="flex-1 flex flex-col items-center space-y-2 w-full px-1.5">
+        <div className="flex-1 flex flex-col items-center space-y-2 w-full px-1.5 overflow-y-auto">
           {categories.map((cat) => {
             const templates = NODE_CATALOG[cat];
             const isHovered = hoveredCategory === cat;
@@ -151,7 +164,7 @@ export const ActionPalette: React.FC<ActionPaletteProps> = ({
                     onMouseEnter={() => handleMouseEnterCategory(cat)}
                     onMouseLeave={handleMouseLeaveCategory}
                   >
-                    <div className="w-full bg-black border border-neutral-800 rounded-2xl p-3.5 shadow-2xl animate-fade-in ring-1 ring-white/5">
+                    <div className="w-full bg-black border border-neutral-800 rounded-2xl p-3.5 shadow-2xl animate-fade-in ring-1 ring-white/5 font-sans">
                       <div className="flex items-center space-x-2 pb-2 mb-2.5 border-b border-neutral-800">
                         {getCategoryIcon(cat)}
                         <h4 className="text-xs font-bold text-white uppercase tracking-wider">{cat}</h4>
@@ -207,15 +220,15 @@ export const ActionPalette: React.FC<ActionPaletteProps> = ({
     );
   }
 
-  // Expanded Mode: Full 80 width sidebar
+  // Expanded Mode: Full sidebar
   return (
-    <aside className="w-80 bg-black border-r border-neutral-800/80 flex flex-col h-full z-10 shrink-0 select-none">
+    <aside className="w-80 bg-black border-r border-neutral-800/80 flex flex-col h-full z-10 shrink-0 select-none font-sans">
       {/* Header with Collapse Button */}
       <div className="p-4 border-b border-neutral-800/80 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <h3 className="text-xs font-bold text-neutral-300 uppercase tracking-widest">Action Library</h3>
-            <span className="text-[10px] text-yellow-400 font-mono">10 Categories</span>
+            <h3 className="text-xs font-bold text-neutral-300 uppercase tracking-widest">Action Palette</h3>
+            <span className="text-[10px] text-yellow-400 font-mono">{categories.length} Categories</span>
           </div>
 
           <button
@@ -231,7 +244,7 @@ export const ActionPalette: React.FC<ActionPaletteProps> = ({
           <HiMagnifyingGlass className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
           <input
             type="text"
-            placeholder="Search nodes..."
+            placeholder="Search nodes & actions..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-neutral-950 border border-neutral-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40"
